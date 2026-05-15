@@ -1,0 +1,60 @@
+server:
+  port: 8080
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        - id: auth-service
+          uri: lb://auth-service
+          predicates:
+            - Path=/api/v1/auth/**,/api/v1/users/**
+        - id: cliente-service
+          uri: lb://cliente-service
+          predicates:
+            - Path=/api/v1/clientes/**
+        - id: mascota-service
+          uri: lb://mascota-service
+          predicates:
+            - Path=/api/v1/mascotas/**
+        - id: veterinario-service
+          uri: lb://veterinario-service
+          predicates:
+            - Path=/api/v1/veterinarios/**
+        - id: agenda-service
+          uri: lb://agenda-service
+          predicates:
+            - Path=/api/v1/citas/**
+        - id: atencion-service
+          uri: lb://atencion-service
+          predicates:
+            - Path=/api/v1/atenciones/**
+        - id: historial-service
+          uri: lb://historial-service
+          predicates:
+            - Path=/api/v1/historiales/**
+        - id: producto-service
+          uri: lb://producto-service
+          predicates:
+            - Path=/api/v1/productos/**
+        - id: inventario-service
+          uri: lb://inventario-service
+          predicates:
+            - Path=/api/v1/inventario/**
+        - id: venta-service
+          uri: lb://venta-service
+          predicates:
+            - Path=/api/v1/ventas/**
+        - id: notificacion-service
+          uri: lb://notificacion-service
+          predicates:
+            - Path=/api/v1/notificaciones/**
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/

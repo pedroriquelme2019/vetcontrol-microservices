@@ -1,0 +1,12 @@
+cl\duoc\vetcontrol\veterinario\controller\VeterinarioController.class
+cl\duoc\vetcontrol\veterinario\VeterinarioServiceApplication.class
+cl\duoc\vetcontrol\veterinario\repository\VeterinarioRepository.class
+cl\duoc\vetcontrol\veterinario\service\VeterinarioService.class
+cl\duoc\vetcontrol\veterinario\dto\VeterinarioRequest.class
+cl\duoc\vetcontrol\veterinario\exception\GlobalExceptionHandler.class
+cl\duoc\vetcontrol\veterinario\exception\ResourceNotFoundException.class
+cl\duoc\vetcontrol\veterinario\exception\ErrorResponse.class
+cl\duoc\vetcontrol\veterinario\exception\BusinessException.class
+cl\duoc\vetcontrol\veterinario\security\JwtAuthFilter.class
+cl\duoc\vetcontrol\veterinario\model\Veterinario.class
+cl\duoc\vetcontrol\veterinario\security\SecurityConfig.class

@@ -1,0 +1,14 @@
+C:\Users\av-alumno\Downloads\vetcontrol-microservices\mascota-service\src\main\java\cl\duoc\vetcontrol\mascota\model\Mascota.java
+C:\Users\av-alumno\Downloads\vetcontrol-microservices\mascota-service\src\main\java\cl\duoc\vetcontrol\mascota\exception\ResourceNotFoundException.java
+C:\Users\av-alumno\Downloads\vetcontrol-microservices\mascota-service\src\main\java\cl\duoc\vetcontrol\mascota\service\MascotaService.java
+C:\Users\av-alumno\Downloads\vetcontrol-microservices\mascota-service\src\main\java\cl\duoc\vetcontrol\mascota\exception\BusinessException.java
+C:\Users\av-alumno\Downloads\vetcontrol-microservices\mascota-service\src\main\java\cl\duoc\vetcontrol\mascota\exception\ErrorResponse.java
+C:\Users\av-alumno\Downloads\vetcontrol-microservices\mascota-service\src\main\java\cl\duoc\vetcontrol\mascota\exception\GlobalExceptionHandler.java
+C:\Users\av-alumno\Downloads\vetcontrol-microservices\mascota-service\src\main\java\cl\duoc\vetcontrol\mascota\client\ClienteClient.java
+C:\Users\av-alumno\Downloads\vetcontrol-microservices\mascota-service\src\main\java\cl\duoc\vetcontrol\mascota\security\JwtAuthFilter.java
+C:\Users\av-alumno\Downloads\vetcontrol-microservices\mascota-service\src\main\java\cl\duoc\vetcontrol\mascota\MascotaServiceApplication.java
+C:\Users\av-alumno\Downloads\vetcontrol-microservices\mascota-service\src\main\java\cl\duoc\vetcontrol\mascota\repository\MascotaRepository.java
+C:\Users\av-alumno\Downloads\vetcontrol-microservices\mascota-service\src\main\java\cl\duoc\vetcontrol\mascota\controller\MascotaController.java
+C:\Users\av-alumno\Downloads\vetcontrol-microservices\mascota-service\src\main\java\cl\duoc\vetcontrol\mascota\dto\MascotaRequest.java
+C:\Users\av-alumno\Downloads\vetcontrol-microservices\mascota-service\src\main\java\cl\duoc\vetcontrol\mascota\security\SecurityConfig.java
+C:\Users\av-alumno\Downloads\vetcontrol-microservices\mascota-service\src\main\java\cl\duoc\vetcontrol\mascota\config\FeignSecurityConfig.java

@@ -1,0 +1,8 @@
+CREATE TABLE IF NOT EXISTS historial_clinico (
+ id BIGINT PRIMARY KEY AUTO_INCREMENT,
+ mascota_id BIGINT NOT NULL,
+ fecha DATETIME NOT NULL,
+ tipo VARCHAR(60) NOT NULL,
+ detalle VARCHAR(500) NOT NULL,
+ referencia_externa_id BIGINT
+);

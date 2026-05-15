@@ -1,0 +1,16 @@
+cl\duoc\vetcontrol\agenda\config\KafkaConfig.class
+cl\duoc\vetcontrol\agenda\client\MascotaClient.class
+cl\duoc\vetcontrol\agenda\security\JwtAuthFilter.class
+cl\duoc\vetcontrol\agenda\security\SecurityConfig.class
+cl\duoc\vetcontrol\agenda\repository\CitaRepository.class
+cl\duoc\vetcontrol\agenda\exception\GlobalExceptionHandler.class
+cl\duoc\vetcontrol\agenda\model\Cita.class
+cl\duoc\vetcontrol\agenda\exception\ErrorResponse.class
+cl\duoc\vetcontrol\agenda\AgendaServiceApplication.class
+cl\duoc\vetcontrol\agenda\exception\BusinessException.class
+cl\duoc\vetcontrol\agenda\exception\ResourceNotFoundException.class
+cl\duoc\vetcontrol\agenda\config\FeignSecurityConfig.class
+cl\duoc\vetcontrol\agenda\controller\CitaController.class
+cl\duoc\vetcontrol\agenda\dto\CitaRequest.class
+cl\duoc\vetcontrol\agenda\client\VeterinarioClient.class
+cl\duoc\vetcontrol\agenda\service\CitaService.class

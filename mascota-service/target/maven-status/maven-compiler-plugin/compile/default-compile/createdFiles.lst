@@ -1,0 +1,14 @@
+cl\duoc\vetcontrol\mascota\client\ClienteClient.class
+cl\duoc\vetcontrol\mascota\exception\ResourceNotFoundException.class
+cl\duoc\vetcontrol\mascota\exception\ErrorResponse.class
+cl\duoc\vetcontrol\mascota\config\FeignSecurityConfig.class
+cl\duoc\vetcontrol\mascota\repository\MascotaRepository.class
+cl\duoc\vetcontrol\mascota\service\MascotaService.class
+cl\duoc\vetcontrol\mascota\dto\MascotaRequest.class
+cl\duoc\vetcontrol\mascota\exception\BusinessException.class
+cl\duoc\vetcontrol\mascota\exception\GlobalExceptionHandler.class
+cl\duoc\vetcontrol\mascota\security\JwtAuthFilter.class
+cl\duoc\vetcontrol\mascota\model\Mascota.class
+cl\duoc\vetcontrol\mascota\security\SecurityConfig.class
+cl\duoc\vetcontrol\mascota\controller\MascotaController.class
+cl\duoc\vetcontrol\mascota\MascotaServiceApplication.class

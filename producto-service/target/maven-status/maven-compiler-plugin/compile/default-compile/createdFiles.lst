@@ -1,0 +1,12 @@
+cl\duoc\vetcontrol\producto\security\SecurityConfig.class
+cl\duoc\vetcontrol\producto\repository\ProductoRepository.class
+cl\duoc\vetcontrol\producto\exception\GlobalExceptionHandler.class
+cl\duoc\vetcontrol\producto\exception\ResourceNotFoundException.class
+cl\duoc\vetcontrol\producto\exception\BusinessException.class
+cl\duoc\vetcontrol\producto\controller\ProductoController.class
+cl\duoc\vetcontrol\producto\ProductoServiceApplication.class
+cl\duoc\vetcontrol\producto\security\JwtAuthFilter.class
+cl\duoc\vetcontrol\producto\model\Producto.class
+cl\duoc\vetcontrol\producto\dto\ProductoRequest.class
+cl\duoc\vetcontrol\producto\service\ProductoService.class
+cl\duoc\vetcontrol\producto\exception\ErrorResponse.class

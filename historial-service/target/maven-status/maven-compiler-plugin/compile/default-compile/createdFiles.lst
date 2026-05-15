@@ -1,0 +1,14 @@
+cl\duoc\vetcontrol\historial\service\HistorialService.class
+cl\duoc\vetcontrol\historial\messaging\HistorialEventListener.class
+cl\duoc\vetcontrol\historial\controller\HistorialController.class
+cl\duoc\vetcontrol\historial\exception\ResourceNotFoundException.class
+cl\duoc\vetcontrol\historial\security\SecurityConfig.class
+cl\duoc\vetcontrol\historial\security\JwtAuthFilter.class
+cl\duoc\vetcontrol\historial\exception\BusinessException.class
+cl\duoc\vetcontrol\historial\exception\GlobalExceptionHandler.class
+cl\duoc\vetcontrol\historial\exception\ErrorResponse.class
+cl\duoc\vetcontrol\historial\dto\HistorialRequest.class
+cl\duoc\vetcontrol\historial\repository\HistorialRepository.class
+cl\duoc\vetcontrol\historial\config\KafkaConfig.class
+cl\duoc\vetcontrol\historial\model\HistorialClinico.class
+cl\duoc\vetcontrol\historial\HistorialServiceApplication.class

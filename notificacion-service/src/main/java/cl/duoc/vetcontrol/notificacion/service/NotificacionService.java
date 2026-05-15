@@ -1,0 +1,4 @@
+package cl.duoc.vetcontrol.notificacion.service;
+import cl.duoc.vetcontrol.notificacion.dto.NotificacionRequest; import cl.duoc.vetcontrol.notificacion.model.Notificacion; import cl.duoc.vetcontrol.notificacion.repository.NotificacionRepository; import org.springframework.stereotype.Service; import java.util.List;
+@Service
+public class NotificacionService { private final NotificacionRepository repository; public NotificacionService(NotificacionRepository repository){this.repository=repository;} public List<Notificacion> all(){return repository.findAll();} public Notificacion create(NotificacionRequest r){Notificacion n=new Notificacion();n.setTipo(r.tipo());n.setMensaje(r.mensaje());return repository.save(n);} public void registrar(String tipo,String mensaje){Notificacion n=new Notificacion();n.setTipo(tipo);n.setMensaje(mensaje);repository.save(n);} }

@@ -1,0 +1,13 @@
+cl\duoc\vetcontrol\atencion\model\Atencion.class
+cl\duoc\vetcontrol\atencion\dto\AtencionRequest.class
+cl\duoc\vetcontrol\atencion\controller\AtencionController.class
+cl\duoc\vetcontrol\atencion\exception\ResourceNotFoundException.class
+cl\duoc\vetcontrol\atencion\security\JwtAuthFilter.class
+cl\duoc\vetcontrol\atencion\exception\GlobalExceptionHandler.class
+cl\duoc\vetcontrol\atencion\repository\AtencionRepository.class
+cl\duoc\vetcontrol\atencion\exception\BusinessException.class
+cl\duoc\vetcontrol\atencion\config\KafkaConfig.class
+cl\duoc\vetcontrol\atencion\exception\ErrorResponse.class
+cl\duoc\vetcontrol\atencion\security\SecurityConfig.class
+cl\duoc\vetcontrol\atencion\AtencionServiceApplication.class
+cl\duoc\vetcontrol\atencion\service\AtencionService.class

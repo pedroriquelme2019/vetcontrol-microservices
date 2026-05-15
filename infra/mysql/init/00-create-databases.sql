@@ -1,0 +1,24 @@
+CREATE DATABASE IF NOT EXISTS vetcontrol_auth CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS vetcontrol_clientes CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS vetcontrol_mascotas CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS vetcontrol_veterinarios CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS vetcontrol_agenda CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS vetcontrol_atenciones CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS vetcontrol_historial CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS vetcontrol_productos CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS vetcontrol_inventario CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS vetcontrol_ventas CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS vetcontrol_notificaciones CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+GRANT ALL PRIVILEGES ON vetcontrol_auth.* TO 'vetcontrol'@'%';
+GRANT ALL PRIVILEGES ON vetcontrol_clientes.* TO 'vetcontrol'@'%';
+GRANT ALL PRIVILEGES ON vetcontrol_mascotas.* TO 'vetcontrol'@'%';
+GRANT ALL PRIVILEGES ON vetcontrol_veterinarios.* TO 'vetcontrol'@'%';
+GRANT ALL PRIVILEGES ON vetcontrol_agenda.* TO 'vetcontrol'@'%';
+GRANT ALL PRIVILEGES ON vetcontrol_atenciones.* TO 'vetcontrol'@'%';
+GRANT ALL PRIVILEGES ON vetcontrol_historial.* TO 'vetcontrol'@'%';
+GRANT ALL PRIVILEGES ON vetcontrol_productos.* TO 'vetcontrol'@'%';
+GRANT ALL PRIVILEGES ON vetcontrol_inventario.* TO 'vetcontrol'@'%';
+GRANT ALL PRIVILEGES ON vetcontrol_ventas.* TO 'vetcontrol'@'%';
+GRANT ALL PRIVILEGES ON vetcontrol_notificaciones.* TO 'vetcontrol'@'%';
+FLUSH PRIVILEGES;

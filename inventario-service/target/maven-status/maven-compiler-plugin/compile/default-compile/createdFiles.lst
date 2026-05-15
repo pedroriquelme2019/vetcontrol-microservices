@@ -1,0 +1,12 @@
+cl\duoc\vetcontrol\inventario\exception\ResourceNotFoundException.class
+cl\duoc\vetcontrol\inventario\controller\InventarioController.class
+cl\duoc\vetcontrol\inventario\dto\InventarioRequest.class
+cl\duoc\vetcontrol\inventario\exception\ErrorResponse.class
+cl\duoc\vetcontrol\inventario\exception\BusinessException.class
+cl\duoc\vetcontrol\inventario\model\InventarioItem.class
+cl\duoc\vetcontrol\inventario\service\InventarioService.class
+cl\duoc\vetcontrol\inventario\InventarioServiceApplication.class
+cl\duoc\vetcontrol\inventario\exception\GlobalExceptionHandler.class
+cl\duoc\vetcontrol\inventario\security\SecurityConfig.class
+cl\duoc\vetcontrol\inventario\security\JwtAuthFilter.class
+cl\duoc\vetcontrol\inventario\repository\InventarioRepository.class
