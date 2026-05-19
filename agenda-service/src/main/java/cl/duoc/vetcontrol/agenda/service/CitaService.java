@@ -7,6 +7,7 @@ import cl.duoc.vetcontrol.agenda.exception.BusinessException;
 import cl.duoc.vetcontrol.agenda.exception.ResourceNotFoundException;
 import cl.duoc.vetcontrol.agenda.model.Cita;
 import cl.duoc.vetcontrol.agenda.repository.CitaRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import feign.FeignException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class CitaService {
@@ -25,15 +27,18 @@ public class CitaService {
     private final MascotaClient mascotaClient;
     private final VeterinarioClient veterinarioClient;
     private final KafkaTemplate<String, String> kafkaTemplate;
+    private final ObjectMapper objectMapper;
 
     public CitaService(CitaRepository repository,
                        MascotaClient mascotaClient,
                        VeterinarioClient veterinarioClient,
-                       KafkaTemplate<String, String> kafkaTemplate) {
+                       KafkaTemplate<String, String> kafkaTemplate,
+                       ObjectMapper objectMapper) {
         this.repository = repository;
         this.mascotaClient = mascotaClient;
         this.veterinarioClient = veterinarioClient;
         this.kafkaTemplate = kafkaTemplate;
+        this.objectMapper = objectMapper;
     }
 
     public List<Cita> findAll() {
@@ -58,19 +63,11 @@ public class CitaService {
             throw new BusinessException("El veterinario ya tiene una cita en ese bloque horario");
         }
 
-        Cita cita = map(new Cita(), request);
-        Cita saved = repository.save(cita);
-
-        String evento = "{\"citaId\":" + saved.getId()
-                + ",\"mascotaId\":" + saved.getMascotaId() + "}";
-
-        kafkaTemplate.send("cita-creada", evento);
+        Cita saved = repository.save(map(new Cita(), request));
+        publicarEventoCitaCreada(saved);
 
         log.info("Cita creada id={} veterinario={} fecha={} hora={}",
-                saved.getId(),
-                saved.getVeterinarioId(),
-                saved.getFecha(),
-                saved.getHora());
+                saved.getId(), saved.getVeterinarioId(), saved.getFecha(), saved.getHora());
 
         return saved;
     }
@@ -107,12 +104,25 @@ public class CitaService {
         return repository.findByFecha(fecha);
     }
 
+    // --- privados ---
+
     private void validarExternos(CitaRequest request) {
         try {
             mascotaClient.findById(request.mascotaId());
             veterinarioClient.findById(request.veterinarioId());
         } catch (FeignException ex) {
             throw new BusinessException("Mascota o veterinario no existe/no disponible");
+        }
+    }
+
+    private void publicarEventoCitaCreada(Cita cita) {
+        try {
+            String evento = objectMapper.writeValueAsString(
+                    Map.of("citaId", cita.getId(), "mascotaId", cita.getMascotaId())
+            );
+            kafkaTemplate.send("cita-creada", evento);
+        } catch (Exception ex) {
+            log.error("Error al publicar evento cita-creada para citaId={}", cita.getId(), ex);
         }
     }
 
