@@ -1,5 +1,6 @@
 server:
   port: 8081
+
 spring:
   application:
     name: auth-service
@@ -22,12 +23,18 @@ eureka:
   client:
     service-url:
       defaultZone: http://localhost:8761/eureka/
+
+# CORREGIDO: El secreto se lee de la variable de entorno JWT_SECRET.
+# Para correr local, define la variable antes de arrancar:
+#   export JWT_SECRET=vetcontrol-secret-key-2026-vetcontrol-secret-key-2026
 security:
   jwt:
-    secret: vetcontrol-secret-key-2026-vetcontrol-secret-key-2026
+    secret: ${JWT_SECRET}
+
 logging:
   level:
     cl.duoc.vetcontrol: INFO
+
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
