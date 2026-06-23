@@ -29,7 +29,7 @@ eureka:
 #   export JWT_SECRET=vetcontrol-secret-key-2026-vetcontrol-secret-key-2026
 security:
   jwt:
-    secret: ${JWT_SECRET}
+    secret: ${JWT_SECRET:vetcontrol-secret-key-2026-vetcontrol-secret-key-2026}
 
 logging:
   level:
