@@ -24,7 +24,7 @@ eureka:
       defaultZone: http://localhost:8761/eureka/
 security:
   jwt:
-    secret: vetcontrol-secret-key-2026-vetcontrol-secret-key-2026
+    secret: ${JWT_SECRET:vetcontrol-secret-key-2026-vetcontrol-secret-key-2026}
 logging:
   level:
     cl.duoc.vetcontrol: INFO

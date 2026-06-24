@@ -7,6 +7,7 @@ import cl.duoc.vetcontrol.producto.repository.ProductoRepository;
 import cl.duoc.vetcontrol.producto.service.ProductoService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -27,140 +28,279 @@ class ProductoServiceTest {
     }
 
     @Test
-    void findAllDebeRetornarProductos() {
+    void findAllDebeRetornarSoloProductosActivos() {
 
-        Producto producto = new Producto();
-        producto.setId(1L);
-        producto.setNombre("Vacuna");
+        Producto producto = crearProducto();
 
-        when(repository.findAll())
+        when(repository.findByActivoTrue())
                 .thenReturn(List.of(producto));
 
-        List<Producto> resultado = service.findAll();
+        List<Producto> resultado =
+                service.findAll();
 
         assertEquals(1, resultado.size());
-        assertEquals("Vacuna", resultado.get(0).getNombre());
+        assertEquals(
+                "Antiparasitario",
+                resultado.get(0).getNombre()
+        );
+
+        verify(repository).findByActivoTrue();
     }
 
     @Test
-    void findByIdDebeRetornarProducto() {
+    void findByIdDebeRetornarProductoActivo() {
 
-        Producto producto = new Producto();
-        producto.setId(1L);
+        Producto producto = crearProducto();
 
-        when(repository.findById(1L))
+        when(repository.findByIdAndActivoTrue(1L))
                 .thenReturn(Optional.of(producto));
 
-        Producto resultado = service.findById(1L);
+        Producto resultado =
+                service.findById(1L);
 
         assertEquals(1L, resultado.getId());
+        assertTrue(resultado.isActivo());
     }
 
     @Test
-    void findByIdDebeLanzarExcepcion() {
+    void findByIdDebeLanzarExcepcionCuandoNoExiste() {
 
-        when(repository.findById(1L))
+        when(repository.findByIdAndActivoTrue(99L))
                 .thenReturn(Optional.empty());
 
-        assertThrows(
-                ResourceNotFoundException.class,
-                () -> service.findById(1L)
+        ResourceNotFoundException exception =
+                assertThrows(
+                        ResourceNotFoundException.class,
+                        () -> service.findById(99L)
+                );
+
+        assertEquals(
+                "Producto no encontrado: 99",
+                exception.getMessage()
         );
     }
 
     @Test
-    void createDebeGuardarProducto() {
+    void byCategoriaDebeRetornarProductosActivos() {
 
-        ProductoRequest request = new ProductoRequest(
-                "Antiparasitario",
+        Producto producto = crearProducto();
+
+        when(repository
+                .findByCategoriaIgnoreCaseAndActivoTrue(
+                        "Medicamento"
+                ))
+                .thenReturn(List.of(producto));
+
+        List<Producto> resultado =
+                service.byCategoria("Medicamento");
+
+        assertEquals(1, resultado.size());
+        assertEquals(
                 "Medicamento",
-                new BigDecimal("15000"),
-                false
+                resultado.get(0).getCategoria()
         );
+    }
+
+    @Test
+    void searchDebeBuscarPorNombre() {
+
+        Producto producto = crearProducto();
+
+        when(repository
+                .findByNombreContainingIgnoreCaseAndActivoTrue(
+                        "anti"
+                ))
+                .thenReturn(List.of(producto));
+
+        List<Producto> resultado =
+                service.search("anti");
+
+        assertEquals(1, resultado.size());
+
+        verify(repository)
+                .findByNombreContainingIgnoreCaseAndActivoTrue(
+                        "anti"
+                );
+    }
+
+    @Test
+    void createDebeGuardarTodosLosCampos() {
+
+        ProductoRequest request = crearRequest(false);
 
         when(repository.save(any(Producto.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
+                .thenAnswer(invocation ->
+                        invocation.getArgument(0)
+                );
 
-        Producto resultado = service.create(request);
+        Producto resultado =
+                service.create(request);
 
-        assertEquals("Antiparasitario", resultado.getNombre());
-        assertEquals("Medicamento", resultado.getCategoria());
+        assertAll(
+                () -> assertEquals(
+                        "Antiparasitario",
+                        resultado.getNombre()
+                ),
+                () -> assertEquals(
+                        "Medicamento",
+                        resultado.getCategoria()
+                ),
+                () -> assertEquals(
+                        new BigDecimal("15000.00"),
+                        resultado.getPrecio()
+                ),
+                () -> assertFalse(
+                        resultado.isRestringido()
+                ),
+                () -> assertTrue(
+                        resultado.isActivo()
+                )
+        );
 
         verify(repository).save(any(Producto.class));
     }
 
     @Test
-    void updateDebeModificarProducto() {
+    void createDebeGuardarProductoRestringido() {
 
-        Producto producto = new Producto();
-        producto.setId(1L);
-        producto.setNombre("Viejo");
-
-        ProductoRequest request = new ProductoRequest(
-                "Nuevo",
-                "Medicamento",
-                new BigDecimal("20000"),
-                false
-        );
-
-        when(repository.findById(1L))
-                .thenReturn(Optional.of(producto));
+        ProductoRequest request = crearRequest(true);
 
         when(repository.save(any(Producto.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
+                .thenAnswer(invocation ->
+                        invocation.getArgument(0)
+                );
 
-        Producto resultado = service.update(1L, request);
+        Producto resultado =
+                service.create(request);
 
-        assertEquals("Nuevo", resultado.getNombre());
-        assertEquals(new BigDecimal("20000"), resultado.getPrecio());
+        assertTrue(resultado.isRestringido());
     }
 
     @Test
-    void deleteDebeDesactivarProducto() {
+    void updateDebeActualizarTodosLosCampos() {
 
-        Producto producto = new Producto();
-        producto.setId(1L);
-        producto.setActivo(true);
+        Producto producto = crearProducto();
 
-        when(repository.findById(1L))
+        ProductoRequest request =
+                new ProductoRequest(
+                        "Anestesia veterinaria",
+                        "Insumo clínico",
+                        new BigDecimal("50000.00"),
+                        true
+                );
+
+        when(repository.findByIdAndActivoTrue(1L))
+                .thenReturn(Optional.of(producto));
+
+        when(repository.save(any(Producto.class)))
+                .thenAnswer(invocation ->
+                        invocation.getArgument(0)
+                );
+
+        Producto resultado =
+                service.update(1L, request);
+
+        assertAll(
+                () -> assertEquals(
+                        1L,
+                        resultado.getId()
+                ),
+                () -> assertEquals(
+                        "Anestesia veterinaria",
+                        resultado.getNombre()
+                ),
+                () -> assertEquals(
+                        "Insumo clínico",
+                        resultado.getCategoria()
+                ),
+                () -> assertEquals(
+                        new BigDecimal("50000.00"),
+                        resultado.getPrecio()
+                ),
+                () -> assertTrue(
+                        resultado.isRestringido()
+                ),
+                () -> assertTrue(
+                        resultado.isActivo()
+                )
+        );
+    }
+
+    @Test
+    void updateDebeFallarCuandoProductoNoExiste() {
+
+        when(repository.findByIdAndActivoTrue(99L))
+                .thenReturn(Optional.empty());
+
+        assertThrows(
+                ResourceNotFoundException.class,
+                () -> service.update(
+                        99L,
+                        crearRequest(false)
+                )
+        );
+
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    void deleteDebeRealizarEliminacionLogica() {
+
+        Producto producto = crearProducto();
+
+        when(repository.findByIdAndActivoTrue(1L))
                 .thenReturn(Optional.of(producto));
 
         service.delete(1L);
 
-        assertFalse(producto.isActivo());
+        ArgumentCaptor<Producto> captor =
+                ArgumentCaptor.forClass(Producto.class);
 
-        verify(repository).save(producto);
+        verify(repository).save(captor.capture());
+
+        assertFalse(
+                captor.getValue().isActivo()
+        );
     }
 
     @Test
-    void byCategoriaDebeRetornarProductos() {
+    void deleteDebeFallarCuandoProductoNoExiste() {
 
-        Producto producto = new Producto();
-        producto.setCategoria("Medicamento");
+        when(repository.findByIdAndActivoTrue(99L))
+                .thenReturn(Optional.empty());
 
-        when(repository.findByCategoriaIgnoreCase("Medicamento"))
-                .thenReturn(List.of(producto));
-
-        List<Producto> resultado = service.byCategoria("Medicamento");
-
-        assertEquals(1, resultado.size());
-    }
-
-    @Test
-    void createDebeGuardarProductoRestringido() {
-
-        ProductoRequest request = new ProductoRequest(
-                "Anestesia",
-                "Medicamento",
-                new BigDecimal("50000"),
-                true
+        assertThrows(
+                ResourceNotFoundException.class,
+                () -> service.delete(99L)
         );
 
-        when(repository.save(any(Producto.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
+        verify(repository, never()).save(any());
+    }
 
-        Producto resultado = service.create(request);
+    private ProductoRequest crearRequest(
+            boolean restringido
+    ) {
+        return new ProductoRequest(
+                "Antiparasitario",
+                "Medicamento",
+                new BigDecimal("15000.00"),
+                restringido
+        );
+    }
 
-        assertTrue(resultado.isRestringido());
+    private Producto crearProducto() {
+
+        Producto producto = new Producto();
+
+        producto.setId(1L);
+        producto.setNombre("Antiparasitario");
+        producto.setCategoria("Medicamento");
+        producto.setPrecio(
+                new BigDecimal("15000.00")
+        );
+        producto.setRestringido(false);
+        producto.setActivo(true);
+
+        return producto;
     }
 }

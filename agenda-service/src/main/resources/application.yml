@@ -4,40 +4,41 @@ server:
 spring:
   application:
     name: agenda-service
+
   datasource:
     url: jdbc:mysql://localhost:3306/vetcontrol_agenda?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
     username: vetcontrol
     password: vetcontrol123
+
   jpa:
+    open-in-view: false
     hibernate:
       ddl-auto: update
     show-sql: true
     properties:
       hibernate:
         format_sql: true
+
   flyway:
     enabled: true
     baseline-on-migrate: true
+
   kafka:
     bootstrap-servers: localhost:9092
-    consumer:
-      group-id: ${spring.application.name}
-      auto-offset-reset: earliest
     producer:
-      value-serializer: org.apache.kafka.common.serialization.StringSerializer
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      retries: 3
 
 eureka:
   client:
     service-url:
       defaultZone: http://localhost:8761/eureka/
 
-# CORREGIDO: El secreto se lee de la variable de entorno JWT_SECRET.
-# Para correr local, define la variable antes de arrancar:
-#   export JWT_SECRET=vetcontrol-secret-key-2026-vetcontrol-secret-key-2026
 security:
   jwt:
-    secret: ${JWT_SECRET}
+    secret: ${JWT_SECRET:vetcontrol-secret-key-2026-vetcontrol-secret-key-2026}
 
 logging:
   level:
@@ -46,3 +47,9 @@ logging:
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

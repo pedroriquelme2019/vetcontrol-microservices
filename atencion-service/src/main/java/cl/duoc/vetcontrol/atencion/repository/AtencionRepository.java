@@ -4,12 +4,29 @@ import cl.duoc.vetcontrol.atencion.model.Atencion;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 
-public interface AtencionRepository extends JpaRepository<Atencion, Long> {
+public interface AtencionRepository
+        extends JpaRepository<Atencion, Long> {
 
-    List<Atencion> findByMascotaId(Long mascotaId);
-    List<Atencion> findByVeterinarioId(Long veterinarioId);
+    List<Atencion> findByActivoTrue();
 
-    // CORREGIDO: permite validar que no se registre dos veces la misma cita
-    boolean existsByCitaId(Long citaId);
+    Optional<Atencion> findByIdAndActivoTrue(Long id);
+
+    List<Atencion> findByMascotaIdAndActivoTrue(
+            Long mascotaId
+    );
+
+    List<Atencion> findByVeterinarioIdAndActivoTrue(
+            Long veterinarioId
+    );
+
+    boolean existsByCitaIdAndActivoTrue(
+            Long citaId
+    );
+
+    boolean existsByCitaIdAndIdNotAndActivoTrue(
+            Long citaId,
+            Long id
+    );
 }

@@ -8,8 +8,9 @@ import cl.duoc.vetcontrol.cliente.repository.ClienteRepository;
 import cl.duoc.vetcontrol.cliente.service.ClienteService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
+import org.mockito.ArgumentCaptor;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,189 +24,407 @@ class ClienteServiceTest {
 
     @BeforeEach
     void setUp() {
-        repository = Mockito.mock(ClienteRepository.class);
+        repository = mock(ClienteRepository.class);
         service = new ClienteService(repository);
     }
 
     @Test
-    void mainDebeEjecutarse() {
-        ClienteServiceApplication.main(new String[]{});
-    }
+    void findAllDebeRetornarSoloClientesActivos() {
 
-    @Test
-    void createDebeGuardarCliente() {
-
-        ClienteRequest request = new ClienteRequest(
-                "99999999-9",
-                "Cliente Test",
-                "+56999999999",
-                "test@example.com",
-                "Dirección Test"
-        );
-
-        when(repository.existsByRut(request.rut())).thenReturn(false);
-        when(repository.existsByCorreo(request.correo())).thenReturn(false);
-
-        when(repository.save(any(Cliente.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
-
-        Cliente result = service.create(request);
-
-        assertNotNull(result);
-        assertEquals("Cliente Test", result.getNombre());
-        assertEquals("99999999-9", result.getRut());
-
-        verify(repository).save(any(Cliente.class));
-    }
-
-    @Test
-    void createDebeLanzarExcepcionCuandoRutExiste() {
-
-        ClienteRequest request = new ClienteRequest(
-                "11111111-1",
-                "Pedro",
-                "+56911111111",
-                "pedro@test.cl",
-                "Santiago"
-        );
-
-        when(repository.existsByRut(request.rut())).thenReturn(true);
-
-        assertThrows(
-                BusinessException.class,
-                () -> service.create(request)
-        );
-
-        verify(repository, never()).save(any());
-    }
-
-    @Test
-    void createDebeLanzarExcepcionCuandoCorreoExiste() {
-
-        ClienteRequest request = new ClienteRequest(
-                "22222222-2",
-                "Carlos",
-                "+56922222222",
-                "correo@test.cl",
-                "Valparaíso"
-        );
-
-        when(repository.existsByRut(request.rut())).thenReturn(false);
-        when(repository.existsByCorreo(request.correo())).thenReturn(true);
-
-        assertThrows(
-                BusinessException.class,
-                () -> service.create(request)
-        );
-
-        verify(repository, never()).save(any());
-    }
-
-    @Test
-    void findAllDebeRetornarClientesActivos() {
-
-        Cliente cliente = new Cliente();
-        cliente.setId(1L);
-        cliente.setNombre("Pedro");
+        Cliente cliente = crearCliente();
 
         when(repository.findByActivoTrue())
                 .thenReturn(List.of(cliente));
 
-        List<Cliente> resultado = service.findAll();
+        List<Cliente> resultado =
+                service.findAll();
 
         assertEquals(1, resultado.size());
-        assertEquals("Pedro", resultado.get(0).getNombre());
+        assertEquals(
+                "Joaquín González",
+                resultado.get(0).getNombre()
+        );
+
+        verify(repository).findByActivoTrue();
     }
 
     @Test
-    void findByIdDebeRetornarCliente() {
+    void findByIdDebeRetornarClienteActivo() {
 
-        Cliente cliente = new Cliente();
-        cliente.setId(1L);
-        cliente.setNombre("María");
+        Cliente cliente = crearCliente();
 
         when(repository.findByIdAndActivoTrue(1L))
                 .thenReturn(Optional.of(cliente));
 
-        Cliente resultado = service.findById(1L);
+        Cliente resultado =
+                service.findById(1L);
 
         assertEquals(1L, resultado.getId());
-        assertEquals("María", resultado.getNombre());
+        assertTrue(resultado.isActivo());
     }
 
     @Test
     void findByIdDebeLanzarExcepcionCuandoNoExiste() {
 
-        when(repository.findByIdAndActivoTrue(1L))
+        when(repository.findByIdAndActivoTrue(99L))
                 .thenReturn(Optional.empty());
 
-        assertThrows(
-                ResourceNotFoundException.class,
-                () -> service.findById(1L)
+        ResourceNotFoundException exception =
+                assertThrows(
+                        ResourceNotFoundException.class,
+                        () -> service.findById(99L)
+                );
+
+        assertEquals(
+                "Cliente no encontrado: 99",
+                exception.getMessage()
         );
     }
 
     @Test
-    void updateDebeModificarCliente() {
+    void createDebeGuardarClienteCompleto() {
 
-        Cliente cliente = new Cliente();
-        cliente.setId(1L);
-        cliente.setNombre("Nombre Antiguo");
+        ClienteRequest request = crearRequest();
 
-        ClienteRequest request = new ClienteRequest(
-                "12345678-9",
-                "Nombre Nuevo",
-                "+56912345678",
-                "nuevo@test.cl",
-                "Nueva Dirección"
-        );
+        when(repository.existsByRut(request.rut()))
+                .thenReturn(false);
 
-        when(repository.findByIdAndActivoTrue(1L))
-                .thenReturn(Optional.of(cliente));
+        when(repository.existsByCorreo(request.correo()))
+                .thenReturn(false);
 
         when(repository.save(any(Cliente.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
+                .thenAnswer(invocation ->
+                        invocation.getArgument(0)
+                );
 
-        Cliente resultado = service.update(1L, request);
+        Cliente resultado =
+                service.create(request);
 
-        assertEquals("Nombre Nuevo", resultado.getNombre());
-        assertEquals("12345678-9", resultado.getRut());
+        assertAll(
+                () -> assertEquals(
+                        request.rut(),
+                        resultado.getRut()
+                ),
+                () -> assertEquals(
+                        request.nombre(),
+                        resultado.getNombre()
+                ),
+                () -> assertEquals(
+                        request.telefono(),
+                        resultado.getTelefono()
+                ),
+                () -> assertEquals(
+                        request.correo(),
+                        resultado.getCorreo()
+                ),
+                () -> assertEquals(
+                        request.direccion(),
+                        resultado.getDireccion()
+                ),
+                () -> assertTrue(resultado.isActivo()),
+                () -> assertNotNull(resultado.getCreatedAt())
+        );
 
         verify(repository).save(any(Cliente.class));
     }
 
     @Test
-    void deleteDebeDesactivarCliente() {
+    void createDebeRechazarRutDuplicado() {
 
-        Cliente cliente = new Cliente();
-        cliente.setId(1L);
-        cliente.setActivo(true);
+        ClienteRequest request = crearRequest();
+
+        when(repository.existsByRut(request.rut()))
+                .thenReturn(true);
+
+        BusinessException exception =
+                assertThrows(
+                        BusinessException.class,
+                        () -> service.create(request)
+                );
+
+        assertEquals(
+                "Ya existe un cliente con ese RUT",
+                exception.getMessage()
+        );
+
+        verify(repository, never())
+                .existsByCorreo(anyString());
+
+        verify(repository, never())
+                .save(any());
+    }
+
+    @Test
+    void createDebeRechazarCorreoDuplicado() {
+
+        ClienteRequest request = crearRequest();
+
+        when(repository.existsByRut(request.rut()))
+                .thenReturn(false);
+
+        when(repository.existsByCorreo(request.correo()))
+                .thenReturn(true);
+
+        BusinessException exception =
+                assertThrows(
+                        BusinessException.class,
+                        () -> service.create(request)
+                );
+
+        assertEquals(
+                "Ya existe un cliente con ese correo",
+                exception.getMessage()
+        );
+
+        verify(repository, never())
+                .save(any());
+    }
+
+    @Test
+    void updateDebeActualizarTodosLosCampos() {
+
+        Cliente cliente = crearCliente();
+
+        LocalDateTime fechaOriginal =
+                cliente.getCreatedAt();
+
+        ClienteRequest request =
+                new ClienteRequest(
+                        "22222222-2",
+                        "Joaquín Actualizado",
+                        "+56988888888",
+                        "nuevo@correo.cl",
+                        "Dirección actualizada"
+                );
 
         when(repository.findByIdAndActivoTrue(1L))
                 .thenReturn(Optional.of(cliente));
 
+        when(repository.existsByRutAndIdNot(
+                request.rut(),
+                1L
+        )).thenReturn(false);
+
+        when(repository.existsByCorreoAndIdNot(
+                request.correo(),
+                1L
+        )).thenReturn(false);
+
         when(repository.save(any(Cliente.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
+                .thenAnswer(invocation ->
+                        invocation.getArgument(0)
+                );
 
-        service.delete(1L);
+        Cliente resultado =
+                service.update(1L, request);
 
-        assertFalse(cliente.isActivo());
-
-        verify(repository).save(cliente);
+        assertAll(
+                () -> assertEquals(
+                        1L,
+                        resultado.getId()
+                ),
+                () -> assertEquals(
+                        "22222222-2",
+                        resultado.getRut()
+                ),
+                () -> assertEquals(
+                        "Joaquín Actualizado",
+                        resultado.getNombre()
+                ),
+                () -> assertEquals(
+                        "+56988888888",
+                        resultado.getTelefono()
+                ),
+                () -> assertEquals(
+                        "nuevo@correo.cl",
+                        resultado.getCorreo()
+                ),
+                () -> assertEquals(
+                        "Dirección actualizada",
+                        resultado.getDireccion()
+                ),
+                () -> assertEquals(
+                        fechaOriginal,
+                        resultado.getCreatedAt()
+                ),
+                () -> assertTrue(resultado.isActivo())
+        );
     }
 
     @Test
-    void searchDebeRetornarClientesPorNombre() {
+    void updateDebeRechazarRutDeOtroCliente() {
 
-        Cliente cliente = new Cliente();
-        cliente.setNombre("Pedro");
+        Cliente cliente = crearCliente();
+        ClienteRequest request = crearRequest();
 
-        when(repository.findByNombreContainingIgnoreCaseAndActivoTrue("Pedro"))
+        when(repository.findByIdAndActivoTrue(1L))
+                .thenReturn(Optional.of(cliente));
+
+        when(repository.existsByRutAndIdNot(
+                request.rut(),
+                1L
+        )).thenReturn(true);
+
+        BusinessException exception =
+                assertThrows(
+                        BusinessException.class,
+                        () -> service.update(1L, request)
+                );
+
+        assertEquals(
+                "Ya existe otro cliente con ese RUT",
+                exception.getMessage()
+        );
+
+        verify(repository, never())
+                .save(any());
+    }
+
+    @Test
+    void updateDebeRechazarCorreoDeOtroCliente() {
+
+        Cliente cliente = crearCliente();
+        ClienteRequest request = crearRequest();
+
+        when(repository.findByIdAndActivoTrue(1L))
+                .thenReturn(Optional.of(cliente));
+
+        when(repository.existsByRutAndIdNot(
+                request.rut(),
+                1L
+        )).thenReturn(false);
+
+        when(repository.existsByCorreoAndIdNot(
+                request.correo(),
+                1L
+        )).thenReturn(true);
+
+        BusinessException exception =
+                assertThrows(
+                        BusinessException.class,
+                        () -> service.update(1L, request)
+                );
+
+        assertEquals(
+                "Ya existe otro cliente con ese correo",
+                exception.getMessage()
+        );
+
+        verify(repository, never())
+                .save(any());
+    }
+
+    @Test
+    void updateDebeLanzarExcepcionCuandoClienteNoExiste() {
+
+        when(repository.findByIdAndActivoTrue(99L))
+                .thenReturn(Optional.empty());
+
+        assertThrows(
+                ResourceNotFoundException.class,
+                () -> service.update(
+                        99L,
+                        crearRequest()
+                )
+        );
+
+        verify(repository, never())
+                .existsByRutAndIdNot(
+                        anyString(),
+                        anyLong()
+                );
+
+        verify(repository, never())
+                .save(any());
+    }
+
+    @Test
+    void deleteDebeRealizarEliminacionLogica() {
+
+        Cliente cliente = crearCliente();
+
+        when(repository.findByIdAndActivoTrue(1L))
+                .thenReturn(Optional.of(cliente));
+
+        service.delete(1L);
+
+        ArgumentCaptor<Cliente> captor =
+                ArgumentCaptor.forClass(Cliente.class);
+
+        verify(repository).save(captor.capture());
+
+        assertFalse(
+                captor.getValue().isActivo()
+        );
+    }
+
+    @Test
+    void deleteDebeLanzarExcepcionCuandoNoExiste() {
+
+        when(repository.findByIdAndActivoTrue(99L))
+                .thenReturn(Optional.empty());
+
+        assertThrows(
+                ResourceNotFoundException.class,
+                () -> service.delete(99L)
+        );
+
+        verify(repository, never())
+                .save(any());
+    }
+
+    @Test
+    void searchDebeBuscarSoloClientesActivos() {
+
+        Cliente cliente = crearCliente();
+
+        when(repository
+                .findByNombreContainingIgnoreCaseAndActivoTrue(
+                        "joa"
+                ))
                 .thenReturn(List.of(cliente));
 
-        List<Cliente> resultado = service.search("Pedro");
+        List<Cliente> resultado =
+                service.search("joa");
 
         assertEquals(1, resultado.size());
-        assertEquals("Pedro", resultado.get(0).getNombre());
+        assertEquals(
+                "Joaquín González",
+                resultado.get(0).getNombre()
+        );
+    }
+
+    private ClienteRequest crearRequest() {
+        return new ClienteRequest(
+                "11111111-1",
+                "Joaquín González",
+                "+56999999999",
+                "joaquin@correo.cl",
+                "Recoleta, Santiago"
+        );
+    }
+
+    private Cliente crearCliente() {
+
+        Cliente cliente = new Cliente();
+
+        cliente.setId(1L);
+        cliente.setRut("11111111-1");
+        cliente.setNombre("Joaquín González");
+        cliente.setTelefono("+56999999999");
+        cliente.setCorreo("joaquin@correo.cl");
+        cliente.setDireccion("Recoleta, Santiago");
+        cliente.setActivo(true);
+        cliente.setCreatedAt(
+                LocalDateTime.of(
+                        2026,
+                        6,
+                        23,
+                        12,
+                        0
+                )
+        );
+
+        return cliente;
     }
 }

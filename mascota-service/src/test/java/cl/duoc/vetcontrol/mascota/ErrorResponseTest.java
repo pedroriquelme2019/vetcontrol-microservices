@@ -11,26 +11,96 @@ import static org.junit.jupiter.api.Assertions.*;
 class ErrorResponseTest {
 
     @Test
-    void gettersYSettersFuncionan() {
+    void constructorCompletoDebeGuardarTodosLosDatos() {
 
-        ErrorResponse error =
-                new ErrorResponse();
+        LocalDateTime fecha =
+                LocalDateTime.of(
+                        2026,
+                        6,
+                        23,
+                        19,
+                        0
+                );
 
-        LocalDateTime now =
-                LocalDateTime.now();
+        List<String> detalles =
+                List.of("nombre: no debe estar vacío");
 
-        error.setTimestamp(now);
-        error.setStatus(400);
-        error.setError("BAD_REQUEST");
-        error.setMessage("Error");
-        error.setPath("/api");
-        error.setDetails(List.of("detalle"));
+        ErrorResponse response = new ErrorResponse(
+                fecha,
+                400,
+                "Bad Request",
+                "Error de validación",
+                "/api/v1/mascotas",
+                detalles
+        );
 
-        assertEquals(now,error.getTimestamp());
-        assertEquals(400,error.getStatus());
-        assertEquals("BAD_REQUEST",error.getError());
-        assertEquals("Error",error.getMessage());
-        assertEquals("/api",error.getPath());
-        assertEquals(1,error.getDetails().size());
+        assertAll(
+                () -> assertEquals(
+                        fecha,
+                        response.getTimestamp()
+                ),
+                () -> assertEquals(
+                        400,
+                        response.getStatus()
+                ),
+                () -> assertEquals(
+                        "Bad Request",
+                        response.getError()
+                ),
+                () -> assertEquals(
+                        "Error de validación",
+                        response.getMessage()
+                ),
+                () -> assertEquals(
+                        "/api/v1/mascotas",
+                        response.getPath()
+                ),
+                () -> assertEquals(
+                        detalles,
+                        response.getDetails()
+                )
+        );
+    }
+
+    @Test
+    void settersDebenModificarTodosLosDatos() {
+
+        ErrorResponse response = new ErrorResponse();
+
+        LocalDateTime fecha = LocalDateTime.now();
+
+        response.setTimestamp(fecha);
+        response.setStatus(404);
+        response.setError("Not Found");
+        response.setMessage("Mascota no encontrada");
+        response.setPath("/api/v1/mascotas/99");
+        response.setDetails(List.of("detalle"));
+
+        assertAll(
+                () -> assertEquals(
+                        fecha,
+                        response.getTimestamp()
+                ),
+                () -> assertEquals(
+                        404,
+                        response.getStatus()
+                ),
+                () -> assertEquals(
+                        "Not Found",
+                        response.getError()
+                ),
+                () -> assertEquals(
+                        "Mascota no encontrada",
+                        response.getMessage()
+                ),
+                () -> assertEquals(
+                        "/api/v1/mascotas/99",
+                        response.getPath()
+                ),
+                () -> assertEquals(
+                        1,
+                        response.getDetails().size()
+                )
+        );
     }
 }

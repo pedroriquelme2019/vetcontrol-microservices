@@ -1,69 +1,171 @@
 package cl.duoc.vetcontrol.cliente;
 
-import cl.duoc.vetcontrol.cliente.exception.*;
+import cl.duoc.vetcontrol.cliente.exception.BusinessException;
+import cl.duoc.vetcontrol.cliente.exception.ErrorResponse;
+import cl.duoc.vetcontrol.cliente.exception.GlobalExceptionHandler;
+import cl.duoc.vetcontrol.cliente.exception.ResourceNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class GlobalExceptionHandlerTest {
 
-    private final GlobalExceptionHandler handler =
-            new GlobalExceptionHandler();
+    private GlobalExceptionHandler handler;
+    private HttpServletRequest request;
+
+    @BeforeEach
+    void setUp() {
+
+        handler = new GlobalExceptionHandler();
+        request = mock(HttpServletRequest.class);
+
+        when(request.getRequestURI())
+                .thenReturn("/api/v1/clientes");
+    }
 
     @Test
     void handleNotFoundDebeRetornar404() {
 
-        HttpServletRequest request =
-                mock(HttpServletRequest.class);
-
-        when(request.getRequestURI())
-                .thenReturn("/clientes/1");
-
         ResponseEntity<ErrorResponse> response =
                 handler.handleNotFound(
-                        new ResourceNotFoundException("No encontrado"),
+                        new ResourceNotFoundException(
+                                "Cliente no encontrado: 99"
+                        ),
                         request
                 );
 
-        assertEquals(404, response.getStatusCode().value());
+        assertEquals(
+                404,
+                response.getStatusCode().value()
+        );
+
+        assertNotNull(response.getBody());
+
+        assertEquals(
+                "Cliente no encontrado: 99",
+                response.getBody().getMessage()
+        );
     }
 
     @Test
     void handleBusinessDebeRetornar400() {
 
-        HttpServletRequest request =
-                mock(HttpServletRequest.class);
-
-        when(request.getRequestURI())
-                .thenReturn("/clientes");
-
         ResponseEntity<ErrorResponse> response =
                 handler.handleBusiness(
-                        new BusinessException("Error negocio"),
+                        new BusinessException(
+                                "RUT duplicado"
+                        ),
                         request
                 );
 
-        assertEquals(400, response.getStatusCode().value());
+        assertEquals(
+                400,
+                response.getStatusCode().value()
+        );
+
+        assertNotNull(response.getBody());
+
+        assertEquals(
+                "RUT duplicado",
+                response.getBody().getMessage()
+        );
     }
 
     @Test
-    void handleGeneralDebeRetornar500() {
+    void handleValidationDebeRetornarDetalles() {
 
-        HttpServletRequest request =
-                mock(HttpServletRequest.class);
+        MethodArgumentNotValidException exception =
+                mock(MethodArgumentNotValidException.class);
 
-        when(request.getRequestURI())
-                .thenReturn("/clientes");
+        BindingResult bindingResult =
+                mock(BindingResult.class);
+
+        when(exception.getBindingResult())
+                .thenReturn(bindingResult);
+
+        when(bindingResult.getFieldErrors())
+                .thenReturn(List.of(
+                        new FieldError(
+                                "clienteRequest",
+                                "correo",
+                                "debe ser válido"
+                        ),
+                        new FieldError(
+                                "clienteRequest",
+                                "nombre",
+                                "no debe estar vacío"
+                        )
+                ));
 
         ResponseEntity<ErrorResponse> response =
-                handler.handleGeneral(
-                        new RuntimeException("Error"),
+                handler.handleValidation(
+                        exception,
                         request
                 );
 
-        assertEquals(500, response.getStatusCode().value());
+        assertEquals(
+                400,
+                response.getStatusCode().value()
+        );
+
+        assertNotNull(response.getBody());
+
+        assertAll(
+                () -> assertEquals(
+                        "Error de validación",
+                        response.getBody().getMessage()
+                ),
+                () -> assertEquals(
+                        2,
+                        response.getBody()
+                                .getDetails()
+                                .size()
+                ),
+                () -> assertTrue(
+                        response.getBody()
+                                .getDetails()
+                                .contains(
+                                        "correo: debe ser válido"
+                                )
+                )
+        );
+    }
+
+    @Test
+    void handleGeneralDebeRetornar500Seguro() {
+
+        ResponseEntity<ErrorResponse> response =
+                handler.handleGeneral(
+                        new RuntimeException(
+                                "Error sensible de MySQL"
+                        ),
+                        request
+                );
+
+        assertEquals(
+                500,
+                response.getStatusCode().value()
+        );
+
+        assertNotNull(response.getBody());
+
+        assertEquals(
+                "Error interno del servidor",
+                response.getBody().getMessage()
+        );
+
+        assertNotEquals(
+                "Error sensible de MySQL",
+                response.getBody().getMessage()
+        );
     }
 }

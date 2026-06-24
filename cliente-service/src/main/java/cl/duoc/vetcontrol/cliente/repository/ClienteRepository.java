@@ -9,14 +9,18 @@ import java.util.Optional;
 public interface ClienteRepository extends JpaRepository<Cliente, Long> {
 
     boolean existsByRut(String rut);
+
     boolean existsByCorreo(String correo);
 
-    // CORREGIDO: solo retorna clientes activos (para que el soft-delete tenga efecto)
+    boolean existsByRutAndIdNot(String rut, Long id);
+
+    boolean existsByCorreoAndIdNot(String correo, Long id);
+
     List<Cliente> findByActivoTrue();
 
-    // CORREGIDO: busca solo entre clientes activos
-    List<Cliente> findByNombreContainingIgnoreCaseAndActivoTrue(String nombre);
+    List<Cliente> findByNombreContainingIgnoreCaseAndActivoTrue(
+            String nombre
+    );
 
-    // Útil para buscar por id solo si está activo
     Optional<Cliente> findByIdAndActivoTrue(Long id);
 }

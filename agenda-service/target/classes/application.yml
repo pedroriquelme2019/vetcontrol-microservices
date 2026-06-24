@@ -1,42 +1,55 @@
 server:
   port: 8085
+
 spring:
   application:
     name: agenda-service
+
   datasource:
     url: jdbc:mysql://localhost:3306/vetcontrol_agenda?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
     username: vetcontrol
     password: vetcontrol123
+
   jpa:
+    open-in-view: false
     hibernate:
       ddl-auto: update
     show-sql: true
     properties:
       hibernate:
         format_sql: true
+
   flyway:
     enabled: true
     baseline-on-migrate: true
 
   kafka:
     bootstrap-servers: localhost:9092
-    consumer:
-      group-id: ${spring.application.name}
-      auto-offset-reset: earliest
     producer:
-      value-serializer: org.apache.kafka.common.serialization.StringSerializer
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      retries: 3
 
 eureka:
   client:
     service-url:
       defaultZone: http://localhost:8761/eureka/
+
 security:
   jwt:
-    secret: vetcontrol-secret-key-2026-vetcontrol-secret-key-2026
+    secret: ${JWT_SECRET:vetcontrol-secret-key-2026-vetcontrol-secret-key-2026}
+
 logging:
   level:
     cl.duoc.vetcontrol: INFO
+
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

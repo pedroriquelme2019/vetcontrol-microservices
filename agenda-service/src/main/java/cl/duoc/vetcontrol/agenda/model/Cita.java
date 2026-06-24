@@ -2,20 +2,18 @@ package cl.duoc.vetcontrol.agenda.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
 
 @Entity
-@Table(
-    name = "citas",
-    uniqueConstraints = @UniqueConstraint(columnNames = {"veterinario_id", "fecha", "hora"})
-)
+@Table(name = "citas")
 public class Cita {
 
     @Id
@@ -37,27 +35,67 @@ public class Cita {
     @Column(nullable = false, length = 160)
     private String motivo;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
-    private String estado = "PROGRAMADA";
+    private EstadoCita estado =
+            EstadoCita.PROGRAMADA;
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Cita() {
+    }
 
-    public Long getMascotaId() { return mascotaId; }
-    public void setMascotaId(Long mascotaId) { this.mascotaId = mascotaId; }
+    public Long getId() {
+        return id;
+    }
 
-    public Long getVeterinarioId() { return veterinarioId; }
-    public void setVeterinarioId(Long veterinarioId) { this.veterinarioId = veterinarioId; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public LocalDate getFecha() { return fecha; }
-    public void setFecha(LocalDate fecha) { this.fecha = fecha; }
+    public Long getMascotaId() {
+        return mascotaId;
+    }
 
-    public LocalTime getHora() { return hora; }
-    public void setHora(LocalTime hora) { this.hora = hora; }
+    public void setMascotaId(Long mascotaId) {
+        this.mascotaId = mascotaId;
+    }
 
-    public String getMotivo() { return motivo; }
-    public void setMotivo(String motivo) { this.motivo = motivo; }
+    public Long getVeterinarioId() {
+        return veterinarioId;
+    }
 
-    public String getEstado() { return estado; }
-    public void setEstado(String estado) { this.estado = estado; }
+    public void setVeterinarioId(Long veterinarioId) {
+        this.veterinarioId = veterinarioId;
+    }
+
+    public LocalDate getFecha() {
+        return fecha;
+    }
+
+    public void setFecha(LocalDate fecha) {
+        this.fecha = fecha;
+    }
+
+    public LocalTime getHora() {
+        return hora;
+    }
+
+    public void setHora(LocalTime hora) {
+        this.hora = hora;
+    }
+
+    public String getMotivo() {
+        return motivo;
+    }
+
+    public void setMotivo(String motivo) {
+        this.motivo = motivo;
+    }
+
+    public EstadoCita getEstado() {
+        return estado;
+    }
+
+    public void setEstado(EstadoCita estado) {
+        this.estado = estado;
+    }
 }

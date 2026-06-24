@@ -11,44 +11,99 @@ import static org.junit.jupiter.api.Assertions.*;
 class ErrorResponseTest {
 
     @Test
-    void gettersYSettersDebenFuncionar() {
+    void constructorCompletoDebeGuardarDatos() {
 
-        ErrorResponse error = new ErrorResponse();
+        LocalDateTime fecha =
+                LocalDateTime.of(
+                        2026,
+                        6,
+                        23,
+                        16,
+                        0
+                );
 
-        LocalDateTime now = LocalDateTime.now();
+        List<String> detalles =
+                List.of("correo: formato inválido");
 
-        error.setTimestamp(now);
-        error.setStatus(400);
-        error.setError("BAD_REQUEST");
-        error.setMessage("Error");
-        error.setPath("/clientes");
-        error.setDetails(List.of("detalle"));
+        ErrorResponse response =
+                new ErrorResponse(
+                        fecha,
+                        400,
+                        "Bad Request",
+                        "Error de validación",
+                        "/api/v1/clientes",
+                        detalles
+                );
 
-        assertEquals(now, error.getTimestamp());
-        assertEquals(400, error.getStatus());
-        assertEquals("BAD_REQUEST", error.getError());
-        assertEquals("Error", error.getMessage());
-        assertEquals("/clientes", error.getPath());
-        assertEquals(1, error.getDetails().size());
+        assertAll(
+                () -> assertEquals(
+                        fecha,
+                        response.getTimestamp()
+                ),
+                () -> assertEquals(
+                        400,
+                        response.getStatus()
+                ),
+                () -> assertEquals(
+                        "Bad Request",
+                        response.getError()
+                ),
+                () -> assertEquals(
+                        "Error de validación",
+                        response.getMessage()
+                ),
+                () -> assertEquals(
+                        "/api/v1/clientes",
+                        response.getPath()
+                ),
+                () -> assertEquals(
+                        detalles,
+                        response.getDetails()
+                )
+        );
     }
 
     @Test
-    void constructorCompletoDebeFuncionar() {
+    void settersDebenModificarTodosLosDatos() {
 
-        LocalDateTime now = LocalDateTime.now();
+        ErrorResponse response =
+                new ErrorResponse();
 
-        ErrorResponse error =
-                new ErrorResponse(
-                        now,
+        LocalDateTime fecha =
+                LocalDateTime.now();
+
+        response.setTimestamp(fecha);
+        response.setStatus(404);
+        response.setError("Not Found");
+        response.setMessage("Cliente no encontrado");
+        response.setPath("/api/v1/clientes/99");
+        response.setDetails(List.of("detalle"));
+
+        assertAll(
+                () -> assertEquals(
+                        fecha,
+                        response.getTimestamp()
+                ),
+                () -> assertEquals(
                         404,
-                        "NOT_FOUND",
-                        "No existe",
-                        "/clientes/1",
-                        List.of("detalle")
-                );
-
-        assertEquals(404, error.getStatus());
-        assertEquals("NOT_FOUND", error.getError());
-        assertEquals("No existe", error.getMessage());
+                        response.getStatus()
+                ),
+                () -> assertEquals(
+                        "Not Found",
+                        response.getError()
+                ),
+                () -> assertEquals(
+                        "Cliente no encontrado",
+                        response.getMessage()
+                ),
+                () -> assertEquals(
+                        "/api/v1/clientes/99",
+                        response.getPath()
+                ),
+                () -> assertEquals(
+                        1,
+                        response.getDetails().size()
+                )
+        );
     }
 }

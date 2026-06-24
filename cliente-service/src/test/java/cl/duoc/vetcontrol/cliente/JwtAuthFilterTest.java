@@ -1,44 +1,68 @@
 package cl.duoc.vetcontrol.cliente;
 
 import cl.duoc.vetcontrol.cliente.security.JwtAuthFilter;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.FilterChain;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import java.nio.charset.StandardCharsets;
+import java.security.Key;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class JwtAuthFilterTest {
 
-    @Test
-    void jwtAuthFilterDebeInstanciarse() {
+    private static final String SECRET =
+            "vetcontrol-secret-key-2026-vetcontrol-secret-key-2026";
 
-        JwtAuthFilter filter = new JwtAuthFilter();
+    private JwtAuthFilter filter;
+    private MockHttpServletResponse response;
+    private FilterChain chain;
 
-        assertNotNull(filter);
-    }
+    @BeforeEach
+    void setUp() {
 
-    @Test
-    void doFilterSinAuthorizationDebeContinuar() throws Exception {
+        SecurityContextHolder.clearContext();
 
-        JwtAuthFilter filter = new JwtAuthFilter();
+        filter = new JwtAuthFilter();
 
         ReflectionTestUtils.setField(
                 filter,
                 "secret",
-                "12345678901234567890123456789012"
+                SECRET
         );
+
+        response =
+                new MockHttpServletResponse();
+
+        chain =
+                mock(FilterChain.class);
+    }
+
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
+    }
+
+    @Test
+    void sinHeaderDebeContinuarSinAutenticacion()
+            throws Exception {
 
         MockHttpServletRequest request =
                 new MockHttpServletRequest();
-
-        MockHttpServletResponse response =
-                new MockHttpServletResponse();
-
-        FilterChain chain =
-                mock(FilterChain.class);
 
         filter.doFilter(
                 request,
@@ -46,67 +70,29 @@ class JwtAuthFilterTest {
                 chain
         );
 
-        verify(chain).doFilter(request, response);
-    }
-
-    @Test
-    void doFilterConBearerInvalidoDebeContinuar() throws Exception {
-
-        JwtAuthFilter filter = new JwtAuthFilter();
-
-        ReflectionTestUtils.setField(
-                filter,
-                "secret",
-                "12345678901234567890123456789012"
+        assertNull(
+                SecurityContextHolder
+                        .getContext()
+                        .getAuthentication()
         );
 
-        MockHttpServletRequest request =
-                new MockHttpServletRequest();
-
-        request.addHeader(
-                "Authorization",
-                "Bearer token_invalido"
-        );
-
-        MockHttpServletResponse response =
-                new MockHttpServletResponse();
-
-        FilterChain chain =
-                mock(FilterChain.class);
-
-        filter.doFilter(
+        verify(chain).doFilter(
                 request,
-                response,
-                chain
+                response
         );
-
-        verify(chain).doFilter(request, response);
     }
 
     @Test
-    void doFilterConHeaderNoBearerDebeContinuar() throws Exception {
-
-        JwtAuthFilter filter = new JwtAuthFilter();
-
-        ReflectionTestUtils.setField(
-                filter,
-                "secret",
-                "12345678901234567890123456789012"
-        );
+    void headerNoBearerDebeContinuarSinAutenticar()
+            throws Exception {
 
         MockHttpServletRequest request =
                 new MockHttpServletRequest();
 
         request.addHeader(
                 "Authorization",
-                "Basic admin"
+                "Basic usuario:clave"
         );
-
-        MockHttpServletResponse response =
-                new MockHttpServletResponse();
-
-        FilterChain chain =
-                mock(FilterChain.class);
 
         filter.doFilter(
                 request,
@@ -114,6 +100,133 @@ class JwtAuthFilterTest {
                 chain
         );
 
-        verify(chain).doFilter(request, response);
+        assertNull(
+                SecurityContextHolder
+                        .getContext()
+                        .getAuthentication()
+        );
+
+        verify(chain).doFilter(
+                request,
+                response
+        );
+    }
+
+    @Test
+    void tokenInvalidoDebeLimpiarContexto()
+            throws Exception {
+
+        Authentication anterior =
+                new UsernamePasswordAuthenticationToken(
+                        "usuario-anterior",
+                        null,
+                        List.of(
+                                new SimpleGrantedAuthority(
+                                        "ROLE_ADMIN"
+                                )
+                        )
+                );
+
+        SecurityContextHolder
+                .getContext()
+                .setAuthentication(anterior);
+
+        MockHttpServletRequest request =
+                new MockHttpServletRequest();
+
+        request.addHeader(
+                "Authorization",
+                "Bearer token-invalido"
+        );
+
+        filter.doFilter(
+                request,
+                response,
+                chain
+        );
+
+        assertNull(
+                SecurityContextHolder
+                        .getContext()
+                        .getAuthentication()
+        );
+
+        verify(chain).doFilter(
+                request,
+                response
+        );
+    }
+
+    @Test
+    void tokenValidoDebeAutenticarUsuario()
+            throws Exception {
+
+        String token =
+                crearToken(
+                        "admin@vetcontrol.cl",
+                        "ADMIN"
+                );
+
+        MockHttpServletRequest request =
+                new MockHttpServletRequest();
+
+        request.addHeader(
+                "Authorization",
+                "Bearer " + token
+        );
+
+        filter.doFilter(
+                request,
+                response,
+                chain
+        );
+
+        Authentication authentication =
+                SecurityContextHolder
+                        .getContext()
+                        .getAuthentication();
+
+        assertNotNull(authentication);
+
+        assertEquals(
+                "admin@vetcontrol.cl",
+                authentication.getName()
+        );
+
+        assertTrue(
+                authentication
+                        .getAuthorities()
+                        .stream()
+                        .anyMatch(authority ->
+                                authority.getAuthority()
+                                        .equals("ROLE_ADMIN")
+                        )
+        );
+
+        verify(chain).doFilter(
+                request,
+                response
+        );
+    }
+
+    private String crearToken(
+            String username,
+            String role
+    ) {
+        Key key =
+                Keys.hmacShaKeyFor(
+                        SECRET.getBytes(
+                                StandardCharsets.UTF_8
+                        )
+                );
+
+        return Jwts.builder()
+                .setSubject(username)
+                .claim("role", role)
+                .signWith(
+                        key,
+                        SignatureAlgorithm.HS256
+                )
+                .compact();
     }
 }

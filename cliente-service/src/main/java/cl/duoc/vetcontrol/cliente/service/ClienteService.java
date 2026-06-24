@@ -14,7 +14,8 @@ import java.util.List;
 @Service
 public class ClienteService {
 
-    private static final Logger log = LoggerFactory.getLogger(ClienteService.class);
+    private static final Logger log =
+            LoggerFactory.getLogger(ClienteService.class);
 
     private final ClienteRepository repository;
 
@@ -22,53 +23,111 @@ public class ClienteService {
         this.repository = repository;
     }
 
-    // CORREGIDO: solo retorna clientes activos
     public List<Cliente> findAll() {
         return repository.findByActivoTrue();
     }
 
-    // CORREGIDO: solo encuentra clientes activos por id
     public Cliente findById(Long id) {
         return repository.findByIdAndActivoTrue(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Cliente no encontrado: " + id));
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Cliente no encontrado: " + id
+                        )
+                );
     }
 
     public Cliente create(ClienteRequest request) {
+
         if (repository.existsByRut(request.rut())) {
-            throw new BusinessException("Ya existe un cliente con ese RUT");
+            throw new BusinessException(
+                    "Ya existe un cliente con ese RUT"
+            );
         }
+
         if (repository.existsByCorreo(request.correo())) {
-            throw new BusinessException("Ya existe un cliente con ese correo");
+            throw new BusinessException(
+                    "Ya existe un cliente con ese correo"
+            );
         }
-        Cliente c = map(new Cliente(), request);
-        log.info("Creando cliente {}", c.getRut());
-        return repository.save(c);
+
+        Cliente cliente = map(
+                new Cliente(),
+                request
+        );
+
+        log.info(
+                "Creando cliente {}",
+                cliente.getRut()
+        );
+
+        return repository.save(cliente);
     }
 
-    public Cliente update(Long id, ClienteRequest request) {
-        Cliente c = findById(id);
-        return repository.save(map(c, request));
+    public Cliente update(
+            Long id,
+            ClienteRequest request
+    ) {
+        Cliente cliente = findById(id);
+
+        if (repository.existsByRutAndIdNot(
+                request.rut(),
+                id
+        )) {
+            throw new BusinessException(
+                    "Ya existe otro cliente con ese RUT"
+            );
+        }
+
+        if (repository.existsByCorreoAndIdNot(
+                request.correo(),
+                id
+        )) {
+            throw new BusinessException(
+                    "Ya existe otro cliente con ese correo"
+            );
+        }
+
+        map(cliente, request);
+
+        log.info(
+                "Actualizando cliente {}",
+                id
+        );
+
+        return repository.save(cliente);
     }
 
-    // Soft-delete: marca activo=false. Con findByActivoTrue en el repo ya no aparece.
     public void delete(Long id) {
-        Cliente c = findById(id);
-        c.setActivo(false);
-        repository.save(c);
-        log.info("Cliente {} marcado como inactivo (soft-delete)", id);
+
+        Cliente cliente = findById(id);
+
+        cliente.setActivo(false);
+
+        repository.save(cliente);
+
+        log.info(
+                "Cliente {} marcado como inactivo",
+                id
+        );
     }
 
-    // CORREGIDO: busca solo entre activos
     public List<Cliente> search(String nombre) {
-        return repository.findByNombreContainingIgnoreCaseAndActivoTrue(nombre);
+        return repository
+                .findByNombreContainingIgnoreCaseAndActivoTrue(
+                        nombre
+                );
     }
 
-    private Cliente map(Cliente c, ClienteRequest r) {
-        c.setRut(r.rut());
-        c.setNombre(r.nombre());
-        c.setTelefono(r.telefono());
-        c.setCorreo(r.correo());
-        c.setDireccion(r.direccion());
-        return c;
+    private Cliente map(
+            Cliente cliente,
+            ClienteRequest request
+    ) {
+        cliente.setRut(request.rut());
+        cliente.setNombre(request.nombre());
+        cliente.setTelefono(request.telefono());
+        cliente.setCorreo(request.correo());
+        cliente.setDireccion(request.direccion());
+
+        return cliente;
     }
 }
