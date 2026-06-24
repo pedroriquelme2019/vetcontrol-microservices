@@ -14,21 +14,48 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 @EnableMethodSecurity
 public class AuthSecurityConfig {
+
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+        return new BCryptPasswordEncoder(12);
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http, JwtAuthFilter jwtAuthFilter) throws Exception {
-        http.csrf(AbstractHttpConfigurer::disable)
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/auth/**", "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
-                        .requestMatchers("/api/v1/users/**").hasRole("ADMIN")
-                        .anyRequest().authenticated()
+    public SecurityFilterChain filterChain(
+            HttpSecurity http,
+            JwtAuthFilter jwtAuthFilter
+    ) throws Exception {
+
+        http.csrf(
+                        AbstractHttpConfigurer::disable
                 )
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(
+                                SessionCreationPolicy.STATELESS
+                        )
+                )
+                .authorizeHttpRequests(auth -> auth
+
+                        .requestMatchers(
+                                "/api/v1/auth/login",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/v3/api-docs/**",
+                                "/actuator/**"
+                        ).permitAll()
+
+                        .requestMatchers(
+                                "/api/v1/users/**"
+                        ).hasRole("ADMIN")
+
+                        .anyRequest()
+                        .authenticated()
+                )
+                .addFilterBefore(
+                        jwtAuthFilter,
+                        UsernamePasswordAuthenticationFilter.class
+                );
+
         return http.build();
     }
 }

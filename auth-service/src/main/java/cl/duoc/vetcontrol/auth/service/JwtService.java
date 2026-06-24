@@ -14,18 +14,51 @@ import java.util.Date;
 
 @Service
 public class JwtService {
+
     @Value("${security.jwt.secret}")
     private String secret;
 
-    public String generateToken(UserAccount user) {
-        Instant now = Instant.now();
+    @Value("${security.jwt.expiration-hours:8}")
+    private long expirationHours;
+
+    public String generateToken(
+            UserAccount user
+    ) {
+        Instant now =
+                Instant.now();
+
+        Instant expiration =
+                now.plus(
+                        expirationHours,
+                        ChronoUnit.HOURS
+                );
+
         return Jwts.builder()
-                .setSubject(user.getUsername())
-                .claim("role", user.getRole())
-                .claim("userId", user.getId())
-                .setIssuedAt(Date.from(now))
-                .setExpiration(Date.from(now.plus(8, ChronoUnit.HOURS)))
-                .signWith(Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8)), SignatureAlgorithm.HS256)
+                .setSubject(
+                        user.getUsername()
+                )
+                .claim(
+                        "role",
+                        user.getRole().name()
+                )
+                .claim(
+                        "userId",
+                        user.getId()
+                )
+                .setIssuedAt(
+                        Date.from(now)
+                )
+                .setExpiration(
+                        Date.from(expiration)
+                )
+                .signWith(
+                        Keys.hmacShaKeyFor(
+                                secret.getBytes(
+                                        StandardCharsets.UTF_8
+                                )
+                        ),
+                        SignatureAlgorithm.HS256
+                )
                 .compact();
     }
 }
