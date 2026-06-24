@@ -15,16 +15,67 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http, JwtAuthFilter jwtAuthFilter) throws Exception {
-        http.csrf(AbstractHttpConfigurer::disable)
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/actuator/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/**").hasAnyRole("ADMIN", "RECEPCIONISTA", "VETERINARIO")
-                        .requestMatchers("/api/v1/**").hasAnyRole("ADMIN", "RECEPCIONISTA")
-                        .anyRequest().authenticated()
+    public SecurityFilterChain filterChain(
+            HttpSecurity http,
+            JwtAuthFilter jwtAuthFilter
+    ) throws Exception {
+
+        http.csrf(
+                        AbstractHttpConfigurer::disable
                 )
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(
+                                SessionCreationPolicy.STATELESS
+                        )
+                )
+                .authorizeHttpRequests(auth -> auth
+
+                        .requestMatchers(
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/v3/api-docs/**",
+                                "/actuator/**"
+                        ).permitAll()
+
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/v1/notificaciones/**"
+                        ).hasAnyRole(
+                                "ADMIN",
+                                "RECEPCIONISTA",
+                                "VETERINARIO"
+                        )
+
+                        .requestMatchers(
+                                HttpMethod.PUT,
+                                "/api/v1/notificaciones/**"
+                        ).hasAnyRole(
+                                "ADMIN",
+                                "RECEPCIONISTA",
+                                "VETERINARIO"
+                        )
+
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/v1/notificaciones/**"
+                        ).hasAnyRole(
+                                "ADMIN",
+                                "RECEPCIONISTA"
+                        )
+
+                        .requestMatchers(
+                                HttpMethod.DELETE,
+                                "/api/v1/notificaciones/**"
+                        ).hasRole("ADMIN")
+
+                        .anyRequest()
+                        .authenticated()
+                )
+                .addFilterBefore(
+                        jwtAuthFilter,
+                        UsernamePasswordAuthenticationFilter.class
+                );
+
         return http.build();
     }
 }

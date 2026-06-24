@@ -19,34 +19,88 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @Component
-public class JwtAuthFilter extends OncePerRequestFilter {
+public class JwtAuthFilter
+        extends OncePerRequestFilter {
 
     @Value("${security.jwt.secret}")
     private String secret;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-            throws ServletException, IOException {
-        String header = request.getHeader("Authorization");
-        if (header != null && header.startsWith("Bearer ")) {
+    protected void doFilterInternal(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain filterChain
+    ) throws ServletException, IOException {
+
+        String header =
+                request.getHeader("Authorization");
+
+        if (header != null
+                && header.startsWith("Bearer ")
+                && SecurityContextHolder
+                .getContext()
+                .getAuthentication() == null) {
+
             try {
-                String token = header.substring(7);
-                Claims claims = Jwts.parserBuilder()
-                        .setSigningKey(Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8)))
-                        .build()
-                        .parseClaimsJws(token)
-                        .getBody();
+                String token =
+                        header.substring(7);
 
-                String username = claims.getSubject();
-                String role = claims.get("role", String.class);
-                List<SimpleGrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role));
+                Claims claims =
+                        Jwts.parserBuilder()
+                                .setSigningKey(
+                                        Keys.hmacShaKeyFor(
+                                                secret.getBytes(
+                                                        StandardCharsets.UTF_8
+                                                )
+                                        )
+                                )
+                                .build()
+                                .parseClaimsJws(token)
+                                .getBody();
 
-                UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(username, null, authorities);
-                SecurityContextHolder.getContext().setAuthentication(auth);
-            } catch (Exception ex) {
+                String username =
+                        claims.getSubject();
+
+                String role =
+                        claims.get(
+                                "role",
+                                String.class
+                        );
+
+                if (username != null
+                        && !username.isBlank()
+                        && role != null
+                        && !role.isBlank()) {
+
+                    List<SimpleGrantedAuthority> authorities =
+                            List.of(
+                                    new SimpleGrantedAuthority(
+                                            "ROLE_" + role
+                                    )
+                            );
+
+                    UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(
+                                    username,
+                                    null,
+                                    authorities
+                            );
+
+                    SecurityContextHolder
+                            .getContext()
+                            .setAuthentication(
+                                    authentication
+                            );
+                }
+
+            } catch (Exception exception) {
                 SecurityContextHolder.clearContext();
             }
         }
-        filterChain.doFilter(request, response);
+
+        filterChain.doFilter(
+                request,
+                response
+        );
     }
 }
