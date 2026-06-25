@@ -36,6 +36,7 @@
       <module name="notificacion-service" options="-parameters" />
       <module name="producto-service" options="-parameters" />
       <module name="venta-service" options="-parameters" />
+      <module name="vetcontrol-microservices" options="-parameters" />
       <module name="veterinario-service" options="-parameters" />
     </option>
   </component>

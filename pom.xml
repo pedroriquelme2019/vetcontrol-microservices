@@ -1,6 +1,8 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -14,12 +16,23 @@
     <artifactId>vetcontrol-microservices</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>vetcontrol-microservices</name>
+    <description>
+        Sistema backend de gestión veterinaria basado en microservicios
+    </description>
+
     <packaging>pom</packaging>
 
+    <!-- Todos los módulos que forman el proyecto -->
     <modules>
+
+        <!-- Infraestructura -->
         <module>eureka-server</module>
         <module>api-gateway</module>
+
+        <!-- Seguridad -->
         <module>auth-service</module>
+
+        <!-- Servicios principales -->
         <module>cliente-service</module>
         <module>mascota-service</module>
         <module>veterinario-service</module>
@@ -30,18 +43,36 @@
         <module>inventario-service</module>
         <module>venta-service</module>
         <module>notificacion-service</module>
+
     </modules>
 
     <properties>
+
+        <!-- El proyecto será compatible con Java 17 -->
         <java.version>17</java.version>
+        <maven.compiler.release>17</maven.compiler.release>
+
+        <!-- Codificación -->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+        <!-- Dependencias comunes -->
         <spring-cloud.version>2023.0.1</spring-cloud.version>
         <jjwt.version>0.11.5</jjwt.version>
         <springdoc.version>2.5.0</springdoc.version>
         <logstash.encoder.version>7.4</logstash.encoder.version>
+
+        <!-- Plugins -->
+        <jacoco.version>0.8.12</jacoco.version>
+        <maven.compiler.version>3.13.0</maven.compiler.version>
+        <maven.surefire.version>3.2.5</maven.surefire.version>
+
     </properties>
 
+    <!-- Control centralizado de versiones de Spring Cloud -->
     <dependencyManagement>
         <dependencies>
+
             <dependency>
                 <groupId>org.springframework.cloud</groupId>
                 <artifactId>spring-cloud-dependencies</artifactId>
@@ -49,17 +80,91 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+
         </dependencies>
     </dependencyManagement>
 
     <build>
+
+        <!-- Configuración heredada por todos los módulos -->
         <pluginManagement>
             <plugins>
+
+                <!-- Generación de archivos ejecutables de Spring Boot -->
                 <plugin>
                     <groupId>org.springframework.boot</groupId>
                     <artifactId>spring-boot-maven-plugin</artifactId>
                 </plugin>
+
+                <!-- Compilación usando Java 17 -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>${maven.compiler.version}</version>
+
+                    <configuration>
+                        <release>${maven.compiler.release}</release>
+                        <encoding>${project.build.sourceEncoding}</encoding>
+                    </configuration>
+                </plugin>
+
+                <!-- Ejecución de pruebas JUnit -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>${maven.surefire.version}</version>
+
+                    <configuration>
+                        <useModulePath>false</useModulePath>
+                        <failIfNoTests>false</failIfNoTests>
+                    </configuration>
+                </plugin>
+
             </plugins>
         </pluginManagement>
+
+        <!-- Estos plugins se ejecutan en todos los módulos -->
+        <plugins>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+            </plugin>
+
+            <!-- Cobertura automática por microservicio -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${jacoco.version}</version>
+
+                <executions>
+
+                    <execution>
+                        <id>prepare-jacoco-agent</id>
+
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+
+                    <execution>
+                        <id>generate-jacoco-report</id>
+                        <phase>test</phase>
+
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+
+                </executions>
+            </plugin>
+
+        </plugins>
     </build>
+
 </project>

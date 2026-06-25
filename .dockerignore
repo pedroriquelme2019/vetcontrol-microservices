@@ -1,0 +1,28 @@
+# Git
+.git
+.gitignore
+
+# IntelliJ
+.idea
+*.iml
+*.ipr
+*.iws
+
+# Compilaciones locales
+**/target
+target
+
+# Logs
+*.log
+logs
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# Variables privadas
+.env
+
+# Archivos temporales
+*.tmp
+*.temp

@@ -1,60 +1,153 @@
 server:
   port: 8080
+
 spring:
   application:
     name: api-gateway
+
+  main:
+    web-application-type: reactive
+
   cloud:
     gateway:
+
+      # Se desactiva la creación automática de rutas para evitar
+      # exponer rutas adicionales no controladas.
       discovery:
         locator:
-          enabled: true
+          enabled: false
           lower-case-service-id: true
+
+      # Implementación de  Configuración global de CORS.
+      globalcors:
+        add-to-simple-url-handler-mapping: true
+        cors-configurations:
+          '[/**]':
+            allowed-origin-patterns:
+              - "http://localhost:*"
+              - "http://127.0.0.1:*"
+            allowed-methods:
+              - GET
+              - POST
+              - PUT
+              - PATCH
+              - DELETE
+              - OPTIONS
+            allowed-headers:
+              - "*"
+            exposed-headers:
+              - Authorization
+              - Content-Type
+            allow-credentials: true
+            max-age: 3600
+
+      # Evita encabezados CORS duplicados cuando también
+      # son agregados por algún microservicio.
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Credentials
+        - Access-Control-Allow-Origin
+
+      httpclient:
+        connect-timeout: 5000
+        response-timeout: 15s
+
       routes:
+
+        # AUTH Y USUARIOS
         - id: auth-service
           uri: lb://auth-service
           predicates:
             - Path=/api/v1/auth/**,/api/v1/users/**
+
+        # CLIENTES
         - id: cliente-service
           uri: lb://cliente-service
           predicates:
             - Path=/api/v1/clientes/**
+
+        # MASCOTAS
         - id: mascota-service
           uri: lb://mascota-service
           predicates:
             - Path=/api/v1/mascotas/**
+
+        # VETERINARIOS
         - id: veterinario-service
           uri: lb://veterinario-service
           predicates:
             - Path=/api/v1/veterinarios/**
+
+        # AGENDA Y CITAS
         - id: agenda-service
           uri: lb://agenda-service
           predicates:
             - Path=/api/v1/citas/**
+
+        # ATENCIONES
         - id: atencion-service
           uri: lb://atencion-service
           predicates:
             - Path=/api/v1/atenciones/**
+
+        # HISTORIAL CLÍNICO
         - id: historial-service
           uri: lb://historial-service
           predicates:
             - Path=/api/v1/historiales/**
+
+        # PRODUCTOS
         - id: producto-service
           uri: lb://producto-service
           predicates:
             - Path=/api/v1/productos/**
+
+        # INVENTARIO
         - id: inventario-service
           uri: lb://inventario-service
           predicates:
             - Path=/api/v1/inventario/**
+
+        # VENTAS
         - id: venta-service
           uri: lb://venta-service
           predicates:
             - Path=/api/v1/ventas/**
+
+        # NOTIFICACIONES
         - id: notificacion-service
           uri: lb://notificacion-service
           predicates:
             - Path=/api/v1/notificaciones/**
+
 eureka:
   client:
+    register-with-eureka: true
+    fetch-registry: true
     service-url:
       defaultZone: http://localhost:8761/eureka/
+
+  instance:
+    prefer-ip-address: true
+
+security:
+  jwt:
+    secret: ${JWT_SECRET:vetcontrol-secret-key-2026-vetcontrol-secret-key-2026}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    cl.duoc.vetcontrol.gateway: INFO
+    org.springframework.cloud.gateway: INFO
