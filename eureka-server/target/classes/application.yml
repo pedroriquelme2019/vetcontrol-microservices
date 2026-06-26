@@ -1,11 +1,42 @@
 server:
   port: 8761
+
 spring:
   application:
     name: eureka-server
+
 eureka:
+  instance:
+    hostname: localhost
+
   client:
     register-with-eureka: false
     fetch-registry: false
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
   server:
+    # Adecuado para desarrollo y evaluación local.
+    # En producción normalmente se mantiene habilitado.
     enable-self-preservation: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+  endpoint:
+    health:
+      show-details: always
+
+info:
+  app:
+    name: Eureka Server VetControl
+    description: Servidor de descubrimiento de microservicios
+    version: 1.0.0
+
+logging:
+  level:
+    com.netflix.eureka: INFO
+    com.netflix.discovery: INFO
