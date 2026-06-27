@@ -1,67 +1,78 @@
 # VetControl Microservices
 
-Plataforma backend basada en **microservicios Spring Boot** para la gestión de una clínica veterinaria con módulo de pet shop. El sistema centraliza la administración de clientes, mascotas, veterinarios, agenda, atenciones clínicas, historial, productos, inventario, ventas, autenticación y notificaciones.
+Backend distribuido para la gestión de una clínica veterinaria y pet shop, desarrollado con **Java, Spring Boot y una arquitectura de microservicios**.
 
-Este repositorio está preparado como proyecto académico/profesional para demostrar arquitectura distribuida, separación de responsabilidades, comunicación entre servicios, seguridad con JWT y uso de infraestructura local con Docker.
+VetControl permite administrar clientes, mascotas, veterinarios, citas, atenciones clínicas, historiales, productos, inventario, ventas, usuarios y notificaciones.
+
+El proyecto incorpora autenticación mediante JWT, descubrimiento de servicios con Eureka, comunicación entre microservicios con OpenFeign, eventos asincrónicos con Kafka y ejecución mediante Docker Compose.
 
 ---
 
 ## Tabla de contenidos
 
-- [Objetivo del proyecto](#objetivo-del-proyecto)
-- [Arquitectura general](#arquitectura-general)
-- [Tecnologías utilizadas](#tecnologías-utilizadas)
-- [Microservicios incluidos](#microservicios-incluidos)
-- [Requisitos previos](#requisitos-previos)
-- [Configuración inicial](#configuración-inicial)
-- [Ejecución del proyecto](#ejecución-del-proyecto)
-- [Credenciales de prueba](#credenciales-de-prueba)
-- [Rutas principales por API Gateway](#rutas-principales-por-api-gateway)
-- [Flujo recomendado para demostración](#flujo-recomendado-para-demostración)
-- [Swagger / OpenAPI](#swagger--openapi)
-- [Colección Postman](#colección-postman)
-- [Estructura del repositorio](#estructura-del-repositorio)
-- [Solución de problemas frecuentes](#solución-de-problemas-frecuentes)
+* [Objetivo](#objetivo)
+* [Arquitectura](#arquitectura)
+* [Tecnologías](#tecnologías)
+* [Microservicios](#microservicios)
+* [Comunicación entre servicios](#comunicación-entre-servicios)
+* [Seguridad](#seguridad)
+* [Bases de datos](#bases-de-datos)
+* [Requisitos](#requisitos)
+* [Configuración inicial](#configuración-inicial)
+* [Ejecución con Docker](#ejecución-con-docker)
+* [Verificación del sistema](#verificación-del-sistema)
+* [Credenciales de demostración](#credenciales-de-demostración)
+* [Pruebas con Postman](#pruebas-con-postman)
+* [Rutas principales](#rutas-principales)
+* [Pruebas automatizadas](#pruebas-automatizadas)
+* [Estructura del repositorio](#estructura-del-repositorio)
+* [Problemas frecuentes](#problemas-frecuentes)
+* [Documentación adicional](#documentación-adicional)
 
 ---
 
-## Objetivo del proyecto
+## Objetivo
 
-**VetControl** busca representar una solución backend escalable para una clínica veterinaria y tienda de productos para mascotas. Su diseño se basa en microservicios independientes, donde cada módulo tiene su propia responsabilidad, base de datos lógica y API REST.
+VetControl busca representar una solución backend modular para una clínica veterinaria y una tienda de productos para mascotas.
 
-El proyecto permite demostrar:
+La arquitectura divide las responsabilidades del sistema en servicios independientes, evitando concentrar toda la aplicación en un único proyecto.
 
-- Separación de responsabilidades por dominio.
-- Uso de **API Gateway** como punto único de entrada.
-- Descubrimiento de servicios con **Eureka Server**.
-- Autenticación y autorización mediante **JWT**.
-- Comunicación sincrónica entre servicios con **OpenFeign**.
-- Comunicación asincrónica por eventos con **Apache Kafka**.
-- Persistencia con **Spring Data JPA**, **MySQL** y migraciones con **Flyway**.
-- Documentación de endpoints mediante **Swagger/OpenAPI**.
+Con esta solución se demuestra:
+
+* Separación de responsabilidades por dominio.
+* Uso de API Gateway como punto único de entrada.
+* Descubrimiento de servicios mediante Eureka.
+* Autenticación y autorización mediante JWT.
+* Comunicación sincrónica con OpenFeign.
+* Comunicación asincrónica mediante Apache Kafka.
+* Base de datos independiente por microservicio.
+* Pruebas unitarias y de integración.
+* Contenerización y ejecución mediante Docker.
+* Documentación y pruebas manuales mediante Postman.
 
 ---
 
-## Arquitectura general
+## Arquitectura
 
 ```mermaid
 flowchart LR
-    C[Cliente / Postman / Frontend] --> G[API Gateway :8080]
-    G --> A[auth-service :8081]
-    G --> CL[cliente-service :8082]
-    G --> M[mascota-service :8083]
-    G --> V[veterinario-service :8084]
-    G --> AG[agenda-service :8085]
-    G --> AT[atencion-service :8086]
-    G --> H[historial-service :8087]
-    G --> P[producto-service :8088]
-    G --> I[inventario-service :8089]
-    G --> VE[venta-service :8090]
-    G --> N[notificacion-service :8091]
+    U[Postman / Frontend] --> G[API Gateway :8080]
+
+    G --> A[Auth :8081]
+    G --> C[Clientes :8082]
+    G --> M[Mascotas :8083]
+    G --> V[Veterinarios :8084]
+    G --> AG[Agenda :8085]
+    G --> AT[Atenciones :8086]
+    G --> H[Historial :8087]
+    G --> P[Productos :8088]
+    G --> I[Inventario :8089]
+    G --> VE[Ventas :8090]
+    G --> N[Notificaciones :8091]
 
     E[Eureka Server :8761] --- G
     E --- A
-    E --- CL
+    E --- C
     E --- M
     E --- V
     E --- AG
@@ -78,7 +89,7 @@ flowchart LR
     K --> N
 
     A --> DB[(MySQL)]
-    CL --> DB
+    C --> DB
     M --> DB
     V --> DB
     AG --> DB
@@ -90,200 +101,428 @@ flowchart LR
     N --> DB
 ```
 
-### Comunicación entre servicios
+Todos los accesos externos deben realizarse preferentemente mediante:
 
-- **Sincrónica:** mediante REST y OpenFeign para validaciones entre servicios.
-  - `mascota-service` valida clientes.
-  - `agenda-service` valida mascotas y veterinarios.
-  - `venta-service` valida clientes, productos e inventario.
-- **Asincrónica:** mediante Kafka para eventos de negocio.
-  - Creación de citas.
-  - Registro de atenciones.
-  - Registro de ventas.
-  - Generación de notificaciones.
+```text
+http://localhost:8080
+```
 
----
+El API Gateway localiza los servicios registrados en Eureka y redirige cada solicitud al microservicio correspondiente.
 
-## Tecnologías utilizadas
+La explicación completa se encuentra en:
 
-| Categoría | Tecnología |
-|---|---|
-| Lenguaje | Java 17 |
-| Framework principal | Spring Boot 3.2.5 |
-| Microservicios | Spring Cloud 2023.0.1 |
-| API Gateway | Spring Cloud Gateway |
-| Service Discovery | Netflix Eureka |
-| Seguridad | Spring Security, JWT, BCrypt, RBAC |
-| Persistencia | Spring Data JPA / Hibernate |
-| Base de datos | MySQL 8 |
-| Migraciones | Flyway |
-| Comunicación REST | OpenFeign |
-| Mensajería | Apache Kafka + Zookeeper |
-| Documentación API | Springdoc OpenAPI / Swagger UI |
-| Build | Maven |
-| Contenedores | Docker Compose |
-| Pruebas manuales | Postman |
+```text
+docs/arquitectura.md
+```
 
 ---
 
-## Microservicios incluidos
+## Tecnologías
 
-| Microservicio | Puerto | Responsabilidad principal |
-|---|---:|---|
-| `eureka-server` | 8761 | Registro y descubrimiento de microservicios |
-| `api-gateway` | 8080 | Entrada única a las APIs del sistema |
-| `auth-service` | 8081 | Login, usuarios, roles y generación de JWT |
-| `cliente-service` | 8082 | Gestión de clientes o dueños de mascotas |
-| `mascota-service` | 8083 | Gestión de mascotas/pacientes |
-| `veterinario-service` | 8084 | Gestión de veterinarios y especialidades |
-| `agenda-service` | 8085 | Gestión de citas y agenda veterinaria |
-| `atencion-service` | 8086 | Registro de atenciones veterinarias |
-| `historial-service` | 8087 | Historial clínico de mascotas |
-| `producto-service` | 8088 | Productos del pet shop |
-| `inventario-service` | 8089 | Stock, validación y descuento de inventario |
-| `venta-service` | 8090 | Ventas y detalle de productos vendidos |
-| `notificacion-service` | 8091 | Notificaciones generadas por eventos Kafka |
+| Categoría                | Tecnología                    |
+| ------------------------ | ----------------------------- |
+| Lenguaje                 | Java 17                       |
+| Framework                | Spring Boot 3.2.5             |
+| Microservicios           | Spring Cloud 2023.0.1         |
+| API Gateway              | Spring Cloud Gateway          |
+| Service Discovery        | Netflix Eureka                |
+| Seguridad                | Spring Security, JWT y BCrypt |
+| Persistencia             | Spring Data JPA e Hibernate   |
+| Base de datos            | MySQL 8                       |
+| Migraciones              | Flyway                        |
+| Comunicación sincrónica  | REST y OpenFeign              |
+| Comunicación asincrónica | Apache Kafka                  |
+| Coordinación Kafka       | Zookeeper                     |
+| Documentación API        | Springdoc OpenAPI / Swagger   |
+| Estado de aplicaciones   | Spring Boot Actuator          |
+| Pruebas                  | JUnit 5 y Mockito             |
+| Construcción             | Maven                         |
+| Contenedores             | Docker y Docker Compose       |
+| Pruebas manuales         | Postman                       |
 
 ---
 
-## Requisitos previos
+## Microservicios
 
-Antes de ejecutar el proyecto, se recomienda tener instalado:
+| Servicio               | Puerto | Responsabilidad                            |
+| ---------------------- | -----: | ------------------------------------------ |
+| `eureka-server`        |   8761 | Registro y descubrimiento de servicios     |
+| `api-gateway`          |   8080 | Punto único de entrada y validación JWT    |
+| `auth-service`         |   8081 | Login, usuarios, roles y generación de JWT |
+| `cliente-service`      |   8082 | Gestión de clientes                        |
+| `mascota-service`      |   8083 | Gestión de mascotas                        |
+| `veterinario-service`  |   8084 | Gestión de veterinarios                    |
+| `agenda-service`       |   8085 | Gestión de citas                           |
+| `atencion-service`     |   8086 | Registro de atenciones clínicas            |
+| `historial-service`    |   8087 | Gestión del historial clínico              |
+| `producto-service`     |   8088 | Gestión de productos                       |
+| `inventario-service`   |   8089 | Control de stock                           |
+| `venta-service`        |   8090 | Registro de ventas                         |
+| `notificacion-service` |   8091 | Notificaciones generadas por eventos       |
 
-- **Java JDK 17**
-- **Maven 3.9 o superior**
-- **Docker Desktop**
-- **Postman**
-- **IntelliJ IDEA** o IDE compatible con Spring Boot
-- Puerto `3306`, `8761`, `8080` a `8091`, `9092` y `2181` disponibles
+---
+
+## Comunicación entre servicios
+
+### Comunicación sincrónica
+
+OpenFeign permite realizar validaciones inmediatas entre microservicios.
+
+Ejemplos:
+
+* `mascota-service` valida que el cliente exista.
+* `agenda-service` valida la mascota y el veterinario.
+* `venta-service` valida el cliente, los productos y el inventario.
+* `atencion-service` trabaja con datos relacionados con citas y mascotas.
+
+### Comunicación asincrónica
+
+Kafka permite publicar eventos sin bloquear la operación principal.
+
+Eventos principales:
+
+```text
+cita-creada
+atencion-registrada
+venta-creada
+```
+
+El servicio de notificaciones puede consumir estos eventos y registrar los avisos correspondientes.
+
+---
+
+## Seguridad
+
+El sistema usa autenticación mediante JSON Web Token.
+
+Flujo:
+
+1. El usuario envía sus credenciales a `auth-service`.
+2. El servicio valida las credenciales.
+3. Se genera un token JWT.
+4. El usuario envía el token en las solicitudes posteriores.
+5. API Gateway valida la firma, vigencia y rol.
+6. Los microservicios procesan la operación autorizada.
+
+Encabezado requerido:
+
+```http
+Authorization: Bearer TOKEN_GENERADO
+```
+
+Roles principales:
+
+```text
+ADMIN
+RECEPCIONISTA
+VETERINARIO
+```
+
+Respuestas esperadas:
+
+| Situación                    |         Código |
+| ---------------------------- | -------------: |
+| Petición correcta            | 200, 201 o 204 |
+| Token inexistente o inválido |            401 |
+| Usuario sin permisos         |            403 |
+| Recurso inexistente          |            404 |
+| Datos inválidos              |            400 |
+
+---
+
+## Bases de datos
+
+VetControl aplica el patrón **base de datos por servicio**.
+
+El entorno local utiliza un contenedor MySQL con los siguientes esquemas:
+
+```text
+vetcontrol_auth
+vetcontrol_clientes
+vetcontrol_mascotas
+vetcontrol_veterinarios
+vetcontrol_agenda
+vetcontrol_atenciones
+vetcontrol_historial
+vetcontrol_productos
+vetcontrol_inventario
+vetcontrol_ventas
+vetcontrol_notificaciones
+```
+
+Los microservicios no deben consultar directamente las tablas pertenecientes a otros servicios.
+
+### Conexión desde Windows
+
+```text
+Host: localhost
+Puerto: 3307
+Usuario: vetcontrol
+```
+
+### Conexión entre contenedores
+
+```text
+Host: mysql
+Puerto: 3306
+```
+
+El puerto `3307` se utiliza desde Windows para evitar conflictos con instalaciones locales como XAMPP.
+
+---
+
+## Requisitos
+
+Para ejecutar el sistema mediante Docker se necesita:
+
+* Git.
+* Docker Desktop.
+* Docker Compose.
+* Postman.
+* Conexión a Internet durante la primera construcción.
+
+IntelliJ IDEA y Java pueden utilizarse para revisar o ejecutar el proyecto fuera de Docker, pero no son obligatorios para iniciar los contenedores.
+
+### Recursos recomendados
+
+Para ejecutar todos los microservicios simultáneamente se recomienda:
+
+* 16 GB de RAM total en el computador.
+* Al menos 6 GB disponibles para Docker.
+* Cerrar aplicaciones que consuman demasiada memoria.
+
+En equipos con menos recursos, los servicios pueden ejecutarse por grupos.
 
 ---
 
 ## Configuración inicial
 
-### 1. Clonar o abrir el proyecto
+### 1. Clonar el repositorio
 
-```bash
-git clone <url-del-repositorio>
+```powershell
+git clone URL_DEL_REPOSITORIO
 cd vetcontrol-microservices
 ```
 
-Si el proyecto fue descargado como ZIP, solo descomprimir y abrir la carpeta raíz en IntelliJ IDEA.
+### 2. Crear el archivo de variables de entorno
 
-### 2. Levantar infraestructura local
+El archivo `.env` contiene configuraciones locales y no debe subirse a GitHub.
 
-El archivo `docker-compose.yml` levanta MySQL, Kafka y Zookeeper.
+En PowerShell:
 
-```bash
+```powershell
+Copy-Item .env.example .env
+```
+
+Variables principales:
+
+```env
+MYSQL_ROOT_PASSWORD=root
+MYSQL_USER=vetcontrol
+MYSQL_PASSWORD=vetcontrol123
+
+JWT_SECRET=CAMBIAR_POR_UNA_CLAVE_SEGURA
+
+ADMIN_PASSWORD=admin123
+RECEPCION_PASSWORD=recepcion123
+VETERINARIO_PASSWORD=vet123
+```
+
+### 3. Validar Docker Compose
+
+Abrir Docker Desktop y esperar hasta que indique:
+
+```text
+Engine running
+```
+
+Después ejecutar:
+
+```powershell
+docker version
+docker compose version
+docker info
+docker compose config
+```
+
+---
+
+## Ejecución con Docker
+
+### Primera ejecución en un computador con recursos suficientes
+
+```powershell
+docker compose up -d --build
+```
+
+Este comando construye las imágenes e inicia los contenedores.
+
+La primera construcción puede tardar varios minutos debido a la descarga de dependencias Maven e imágenes Docker.
+
+### Inicio posterior sin reconstrucción
+
+```powershell
 docker compose up -d
 ```
 
-Esto crea la infraestructura base:
+### Ejecución ordenada por grupos
 
-| Servicio | Puerto |
-|---|---:|
-| MySQL | 3306 |
-| Zookeeper | 2181 |
-| Kafka | 9092 |
-
-Además, el script `infra/mysql/init/00-create-databases.sql` crea las bases lógicas necesarias:
-
-- `vetcontrol_auth`
-- `vetcontrol_clientes`
-- `vetcontrol_mascotas`
-- `vetcontrol_veterinarios`
-- `vetcontrol_agenda`
-- `vetcontrol_atenciones`
-- `vetcontrol_historial`
-- `vetcontrol_productos`
-- `vetcontrol_inventario`
-- `vetcontrol_ventas`
-- `vetcontrol_notificaciones`
-
-### 3. Configurar variable JWT
-
-Algunos servicios leen el secreto JWT desde la variable de entorno `JWT_SECRET`.
-
-#### Windows PowerShell
+#### Infraestructura
 
 ```powershell
-$env:JWT_SECRET="vetcontrol-secret-key-2026-vetcontrol-secret-key-2026"
+docker compose up -d mysql zookeeper kafka
 ```
 
-#### Linux / macOS / Git Bash
+Comprobar:
 
-```bash
-export JWT_SECRET=vetcontrol-secret-key-2026-vetcontrol-secret-key-2026
+```powershell
+docker compose ps
 ```
 
-> Importante: define esta variable antes de ejecutar los microservicios desde la terminal o configura la variable en IntelliJ IDEA dentro de cada configuración de ejecución.
+MySQL y Kafka deben aparecer como:
 
----
-
-## Ejecución del proyecto
-
-### Opción A: ejecutar desde IntelliJ IDEA
-
-Abrir el proyecto raíz y ejecutar los módulos en este orden:
-
-1. `eureka-server`
-2. `api-gateway`
-3. `auth-service`
-4. Servicios de dominio:
-   - `cliente-service`
-   - `mascota-service`
-   - `veterinario-service`
-   - `agenda-service`
-   - `atencion-service`
-   - `historial-service`
-   - `producto-service`
-   - `inventario-service`
-   - `venta-service`
-   - `notificacion-service`
-
-Cuando los servicios estén arriba, se puede validar Eureka en:
-
-```http
-http://localhost:8761
+```text
+healthy
 ```
 
-### Opción B: compilar todo el proyecto
+#### Servicios centrales
 
-```bash
-mvn clean install -DskipTests
+```powershell
+docker compose up -d eureka-server auth-service api-gateway
 ```
 
-### Opción C: ejecutar un módulo por Maven
+#### Dominio clínico
+
+```powershell
+docker compose up -d cliente-service mascota-service veterinario-service
+docker compose up -d agenda-service atencion-service historial-service
+```
+
+#### Dominio comercial
+
+```powershell
+docker compose up -d producto-service inventario-service
+docker compose up -d venta-service notificacion-service
+```
+
+### Construir un solo microservicio
+
+El proyecto usa un Dockerfile genérico ubicado en la raíz.
 
 Ejemplo:
 
-```bash
-mvn -pl eureka-server spring-boot:run
+```powershell
+docker build `
+  --build-arg MODULE=cliente-service `
+  -t vetcontrol-cliente-service .
 ```
 
-Otro ejemplo:
+Después puede iniciarse mediante:
 
-```bash
-mvn -pl api-gateway spring-boot:run
+```powershell
+docker compose up -d --no-deps cliente-service
+```
+
+Esto permite reutilizar el mismo Dockerfile para todos los módulos y evita mantener múltiples archivos prácticamente idénticos.
+
+### Detener los contenedores
+
+```powershell
+docker compose stop
+```
+
+También se puede utilizar:
+
+```powershell
+docker compose down
+```
+
+No ejecutar salvo que se desee eliminar los datos:
+
+```powershell
+docker compose down -v
+```
+
+La opción `-v` elimina los volúmenes, incluyendo los datos almacenados en MySQL.
+
+---
+
+## Verificación del sistema
+
+### Estado de los contenedores
+
+```powershell
+docker compose ps -a
+```
+
+### Registros de un servicio
+
+```powershell
+docker compose logs --tail=150 api-gateway
+```
+
+### Healthchecks
+
+Cada aplicación expone:
+
+```text
+/actuator/health
+```
+
+Ejemplos:
+
+```text
+http://localhost:8080/actuator/health
+http://localhost:8081/actuator/health
+http://localhost:8082/actuator/health
+http://localhost:8083/actuator/health
+http://localhost:8084/actuator/health
+http://localhost:8085/actuator/health
+http://localhost:8086/actuator/health
+http://localhost:8087/actuator/health
+http://localhost:8088/actuator/health
+http://localhost:8089/actuator/health
+http://localhost:8090/actuator/health
+http://localhost:8091/actuator/health
+```
+
+Respuesta esperada:
+
+```json
+{
+  "status": "UP"
+}
+```
+
+### Eureka Server
+
+```text
+http://localhost:8761
+```
+
+Los microservicios iniciados deben aparecer registrados con estado:
+
+```text
+UP
 ```
 
 ---
 
-## Credenciales de prueba
+## Credenciales de demostración
 
-El `auth-service` crea usuarios iniciales automáticamente al iniciar.
-
-| Usuario | Contraseña | Rol |
-|---|---|---|
-| `admin` | `admin123` | `ADMIN` |
+| Usuario     | Contraseña     | Rol             |
+| ----------- | -------------- | --------------- |
+| `admin`     | `admin123`     | `ADMIN`         |
 | `recepcion` | `recepcion123` | `RECEPCIONISTA` |
-| `vet` | `vet123` | `VETERINARIO` |
+| `vet`       | `vet123`       | `VETERINARIO`   |
+
+Estas credenciales corresponden al entorno académico y de demostración.
 
 ---
 
-## Login
+## Pruebas con Postman
 
-Todas las pruebas deben iniciar solicitando un token JWT.
+### Login
 
 ```http
 POST http://localhost:8080/api/v1/auth/login
@@ -297,274 +536,103 @@ Content-Type: application/json
 }
 ```
 
-Respuesta esperada:
+La respuesta debe contener un token JWT.
 
-```json
-{
-  "token": "TOKEN_GENERADO",
-  "tokenType": "Bearer",
-  "username": "admin",
-  "role": "ADMIN"
-}
-```
-
-Para consumir endpoints protegidos, agregar el token en Postman:
-
-```http
-Authorization: Bearer TOKEN_GENERADO
-```
-
----
-
-## Rutas principales por API Gateway
-
-El API Gateway se ejecuta en el puerto `8080` y redirige las solicitudes hacia cada microservicio.
-
-| Recurso | Método | Ruta |
-|---|---|---|
-| Auth | POST | `/api/v1/auth/login` |
-| Usuarios | GET / POST | `/api/v1/users` |
-| Clientes | GET / POST | `/api/v1/clientes` |
-| Clientes por ID | GET / PUT / DELETE | `/api/v1/clientes/{id}` |
-| Mascotas | GET / POST | `/api/v1/mascotas` |
-| Mascotas por cliente | GET | `/api/v1/mascotas/cliente/{clienteId}` |
-| Veterinarios | GET / POST | `/api/v1/veterinarios` |
-| Veterinarios por especialidad | GET | `/api/v1/veterinarios/especialidad?nombre={especialidad}` |
-| Citas | GET / POST | `/api/v1/citas` |
-| Citas por fecha | GET | `/api/v1/citas/fecha/{fecha}` |
-| Atenciones | GET / POST | `/api/v1/atenciones` |
-| Atenciones por mascota | GET | `/api/v1/atenciones/mascotas/{mascotaId}` |
-| Historiales | GET / POST | `/api/v1/historiales` |
-| Historial por mascota | GET | `/api/v1/historiales/mascotas/{mascotaId}` |
-| Productos | GET / POST | `/api/v1/productos` |
-| Productos por categoría | GET | `/api/v1/productos/categoria/{categoria}` |
-| Inventario | GET / POST | `/api/v1/inventario` |
-| Inventario por producto | GET | `/api/v1/inventario/productos/{productoId}` |
-| Validar stock | GET | `/api/v1/inventario/productos/{productoId}/validar/{cantidad}` |
-| Descontar stock | PUT | `/api/v1/inventario/productos/{productoId}/descontar/{cantidad}` |
-| Bajo stock | GET | `/api/v1/inventario/bajo-stock` |
-| Ventas | GET / POST | `/api/v1/ventas` |
-| Ventas por cliente | GET | `/api/v1/ventas/clientes/{clienteId}` |
-| Notificaciones | GET / POST | `/api/v1/notificaciones` |
-
----
-
-## Ejemplos rápidos de uso
-
-### Crear cliente
-
-```http
-POST http://localhost:8080/api/v1/clientes
-Authorization: Bearer TOKEN_GENERADO
-Content-Type: application/json
-```
-
-```json
-{
-  "rut": "12345678-9",
-  "nombre": "Pedro Riquelme",
-  "telefono": "+56912345678",
-  "correo": "pedro@example.com",
-  "direccion": "Santiago"
-}
-```
-
-### Crear mascota
-
-```http
-POST http://localhost:8080/api/v1/mascotas
-Authorization: Bearer TOKEN_GENERADO
-Content-Type: application/json
-```
-
-```json
-{
-  "clienteId": 1,
-  "nombre": "Rocky",
-  "especie": "Perro",
-  "raza": "Mestizo",
-  "edad": 3,
-  "sexo": "Macho",
-  "peso": 12.5,
-  "microchip": "CHIP-123"
-}
-```
-
-### Crear veterinario
-
-```http
-POST http://localhost:8080/api/v1/veterinarios
-Authorization: Bearer TOKEN_GENERADO
-Content-Type: application/json
-```
-
-```json
-{
-  "rut": "11111111-1",
-  "nombre": "Dra. Camila Torres",
-  "especialidad": "Medicina interna",
-  "correo": "camila.torres@vetcontrol.cl"
-}
-```
-
-### Agendar cita
-
-```http
-POST http://localhost:8080/api/v1/citas
-Authorization: Bearer TOKEN_GENERADO
-Content-Type: application/json
-```
-
-```json
-{
-  "mascotaId": 1,
-  "veterinarioId": 1,
-  "fecha": "2026-06-01",
-  "hora": "10:30:00",
-  "motivo": "Consulta general"
-}
-```
-
-### Registrar atención
-
-```http
-POST http://localhost:8080/api/v1/atenciones
-Authorization: Bearer TOKEN_GENERADO
-Content-Type: application/json
-```
-
-```json
-{
-  "citaId": 1,
-  "mascotaId": 1,
-  "veterinarioId": 1,
-  "fechaAtencion": "2026-06-01T10:45:00",
-  "diagnostico": "Control general sin hallazgos graves",
-  "tratamiento": "Vitaminas y control en 30 días",
-  "observaciones": "Paciente estable"
-}
-```
-
-### Crear producto
-
-```http
-POST http://localhost:8080/api/v1/productos
-Authorization: Bearer TOKEN_GENERADO
-Content-Type: application/json
-```
-
-```json
-{
-  "nombre": "Alimento premium perro adulto",
-  "categoria": "Alimentos",
-  "precio": 24990,
-  "restringido": false
-}
-```
-
-### Crear inventario
-
-```http
-POST http://localhost:8080/api/v1/inventario
-Authorization: Bearer TOKEN_GENERADO
-Content-Type: application/json
-```
-
-```json
-{
-  "productoId": 1,
-  "stockActual": 20,
-  "stockMinimo": 5
-}
-```
-
-### Registrar venta
-
-```http
-POST http://localhost:8080/api/v1/ventas
-Authorization: Bearer TOKEN_GENERADO
-Content-Type: application/json
-```
-
-```json
-{
-  "clienteId": 1,
-  "medioPago": "DEBITO",
-  "detalles": [
-    {
-      "productoId": 1,
-      "cantidad": 2
-    }
-  ]
-}
-```
-
----
-
-## Flujo recomendado para demostración
-
-Para presentar el sistema de forma ordenada, se recomienda seguir este flujo:
-
-1. Levantar Docker con MySQL, Kafka y Zookeeper.
-2. Iniciar Eureka Server y revisar `http://localhost:8761`.
-3. Iniciar API Gateway.
-4. Iniciar los microservicios principales.
-5. Realizar login con usuario `admin`.
-6. Copiar el token JWT en Postman.
-7. Crear un cliente.
-8. Crear una mascota asociada al cliente.
-9. Crear un veterinario.
-10. Agendar una cita.
-11. Registrar una atención veterinaria.
-12. Crear un producto del pet shop.
-13. Crear inventario para ese producto.
-14. Registrar una venta.
-15. Revisar notificaciones generadas por eventos Kafka.
-
----
-
-## Swagger / OpenAPI
-
-Cada microservicio expone su propia documentación Swagger.
-
-Ejemplos:
-
-```http
-http://localhost:8081/swagger-ui.html
-http://localhost:8082/swagger-ui.html
-http://localhost:8083/swagger-ui.html
-http://localhost:8088/swagger-ui.html
-```
-
-También puede usarse la ruta alternativa:
-
-```http
-http://localhost:8082/swagger-ui/index.html
-```
-
----
-
-## Colección Postman
-
-El repositorio incluye una colección lista para pruebas manuales:
+El token debe configurarse en Postman mediante:
 
 ```text
-VetControl.postman_collection.json
+Authorization
+Bearer Token
 ```
 
-También existen ejemplos documentados en:
+### Flujo recomendado
+
+1. Iniciar sesión.
+2. Crear un cliente.
+3. Crear una mascota.
+4. Crear un veterinario.
+5. Agendar una cita.
+6. Registrar una atención.
+7. Crear un producto.
+8. Crear inventario.
+9. Validar el stock.
+10. Registrar una venta.
+11. Consultar notificaciones.
+
+Los ejemplos completos se encuentran en:
 
 ```text
 docs/postman-ejemplos.md
 ```
 
-Recomendación de uso en Postman:
+Los archivos importables quedarán almacenados en:
 
-1. Importar la colección.
-2. Ejecutar login.
-3. Guardar el token JWT.
-4. Agregar el token en la pestaña **Authorization** como `Bearer Token`.
-5. Probar los endpoints por flujo funcional.
+```text
+postman/VetControl.postman_collection.json
+postman/VetControl.postman_environment.json
+```
+
+---
+
+## Rutas principales
+
+Todas las rutas deben consumirse preferentemente mediante API Gateway:
+
+```text
+http://localhost:8080
+```
+
+| Recurso              | Método             | Ruta                                                             |
+| -------------------- | ------------------ | ---------------------------------------------------------------- |
+| Login                | POST               | `/api/v1/auth/login`                                             |
+| Usuarios             | GET / POST         | `/api/v1/users`                                                  |
+| Clientes             | GET / POST         | `/api/v1/clientes`                                               |
+| Cliente por ID       | GET / PUT / DELETE | `/api/v1/clientes/{id}`                                          |
+| Mascotas             | GET / POST         | `/api/v1/mascotas`                                               |
+| Mascotas por cliente | GET                | `/api/v1/mascotas/cliente/{clienteId}`                           |
+| Veterinarios         | GET / POST         | `/api/v1/veterinarios`                                           |
+| Citas                | GET / POST         | `/api/v1/citas`                                                  |
+| Atenciones           | GET / POST         | `/api/v1/atenciones`                                             |
+| Historiales          | GET / POST         | `/api/v1/historiales`                                            |
+| Productos            | GET / POST         | `/api/v1/productos`                                              |
+| Inventario           | GET / POST         | `/api/v1/inventario`                                             |
+| Validar stock        | GET                | `/api/v1/inventario/productos/{productoId}/validar/{cantidad}`   |
+| Descontar stock      | PUT                | `/api/v1/inventario/productos/{productoId}/descontar/{cantidad}` |
+| Ventas               | GET / POST         | `/api/v1/ventas`                                                 |
+| Notificaciones       | GET / POST         | `/api/v1/notificaciones`                                         |
+
+---
+
+## Pruebas automatizadas
+
+El proyecto contiene pruebas unitarias y de integración desarrolladas con JUnit 5 y Mockito.
+
+### Ejecutar desde Maven
+
+```powershell
+mvn clean test
+```
+
+### Ejecutar Maven mediante Docker
+
+```powershell
+docker volume create vetcontrol-maven-cache
+```
+
+```powershell
+docker run --rm `
+  -v "${PWD}:/workspace" `
+  -v vetcontrol-maven-cache:/root/.m2 `
+  -w /workspace `
+  maven:3.9.9-eclipse-temurin-17 `
+  mvn -B clean test
+```
+
+Los reportes JaCoCo de cada módulo se generan dentro de:
+
+```text
+nombre-del-servicio/target/site/jacoco/index.html
+```
 
 ---
 
@@ -585,140 +653,161 @@ vetcontrol-microservices/
 ├── venta-service/
 ├── notificacion-service/
 ├── eureka-server/
-├── infra/
-│   └── mysql/
-│       └── init/
+│
 ├── docs/
 │   ├── arquitectura.md
 │   └── postman-ejemplos.md
+│
+├── postman/
+│   ├── VetControl.postman_collection.json
+│   └── VetControl.postman_environment.json
+│
+├── infra/
+│   └── mysql/
+│       └── init/
+│           └── 00-create-databases.sql
+│
+├── Dockerfile
 ├── docker-compose.yml
-├── VetControl.postman_collection.json
+├── .dockerignore
+├── .env.example
 ├── pom.xml
 └── README.md
 ```
 
 ---
 
-## Bases de datos
+## Problemas frecuentes
 
-El proyecto usa un enfoque de **base de datos por servicio**, separando los esquemas en MySQL. Esto evita que los microservicios compartan tablas directamente y mantiene la independencia de cada dominio.
+### Docker no responde o muestra error 500
 
-La configuración local usa un solo contenedor MySQL con varios esquemas para facilitar el desarrollo y las pruebas académicas. En un entorno productivo, cada servicio podría tener una base o instancia independiente.
-
----
-
-## Seguridad
-
-El sistema usa:
-
-- Login centralizado en `auth-service`.
-- Generación de token JWT.
-- Validación del token en los microservicios.
-- Contraseñas cifradas con BCrypt.
-- Roles principales:
-  - `ADMIN`
-  - `RECEPCIONISTA`
-  - `VETERINARIO`
-
----
-
-## Eventos Kafka
-
-Los servicios pueden publicar eventos de negocio para desacoplar procesos secundarios, especialmente notificaciones.
-
-Eventos principales considerados:
-
-- `cita-creada`
-- `atencion-registrada`
-- `venta-creada`
-
-El `notificacion-service` consume eventos y registra notificaciones asociadas a operaciones importantes del sistema.
-
----
-
-## Solución de problemas frecuentes
-
-### 1. Error de conexión a MySQL
-
-Verificar que Docker esté levantado:
-
-```bash
-docker compose ps
-```
-
-Si MySQL no está iniciado:
-
-```bash
-docker compose up -d
-```
-
-### 2. Error por variable `JWT_SECRET`
-
-Definir la variable antes de iniciar los servicios:
+Cerrar Docker Desktop y ejecutar:
 
 ```powershell
-$env:JWT_SECRET="vetcontrol-secret-key-2026-vetcontrol-secret-key-2026"
+wsl --shutdown
 ```
 
-O configurarla en IntelliJ IDEA en:
+Abrir Docker Desktop nuevamente y esperar hasta que indique:
 
 ```text
-Run > Edit Configurations > Environment variables
+Engine running
 ```
 
-### 3. Servicios no aparecen en Eureka
+Después comprobar:
 
-Revisar que `eureka-server` esté iniciado antes de los demás servicios.
+```powershell
+docker info
+```
 
-Panel de Eureka:
+### Puerto MySQL ocupado
 
-```http
+VetControl publica MySQL en:
+
+```text
+localhost:3307
+```
+
+El puerto interno del contenedor sigue siendo:
+
+```text
+3306
+```
+
+### API Gateway se reinicia
+
+Revisar:
+
+```powershell
+docker compose logs --tail=200 api-gateway
+```
+
+Confirmar que la configuración de CORS y los filtros del Gateway sean válidos.
+
+### Un servicio aparece como unhealthy
+
+Probar:
+
+```powershell
+curl.exe -i http://localhost:PUERTO/actuator/health
+```
+
+Revisar también:
+
+```powershell
+docker compose logs --tail=200 nombre-del-servicio
+```
+
+### Token expirado
+
+Ejecutar nuevamente el login y reemplazar el token anterior en Postman.
+
+### Servicios no aparecen en Eureka
+
+Confirmar que Eureka esté saludable:
+
+```text
 http://localhost:8761
 ```
 
-### 4. API Gateway no responde
-
-Verificar que:
-
-- `api-gateway` esté iniciado.
-- El servicio destino esté registrado en Eureka.
-- La ruta usada comience con `/api/v1/...`.
-- El token JWT sea válido cuando el endpoint lo requiera.
-
-### 5. Kafka no recibe eventos
-
-Verificar que Kafka y Zookeeper estén activos:
-
-```bash
-docker compose ps
-```
-
-También confirmar que los servicios que publican o consumen eventos estén iniciados.
-
-### 6. Puerto ocupado
-
-Si un puerto está ocupado, cerrar el proceso que lo usa o cambiar el puerto en el archivo:
+Después revisar las variables:
 
 ```text
-src/main/resources/application.yml
+EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+EUREKA_INSTANCE_PREFERIPADDRESS
 ```
+
+### El computador se queda sin memoria
+
+Detener los servicios que no se estén utilizando:
+
+```powershell
+docker compose stop nombre-del-servicio
+```
+
+También se pueden iniciar los servicios por grupos en lugar de ejecutar toda la solución simultáneamente.
 
 ---
 
 ## Documentación adicional
 
-- `docs/arquitectura.md`: explicación general de la arquitectura.
-- `docs/postman-ejemplos.md`: ejemplos de payloads para pruebas.
-- `VetControl.postman_collection.json`: colección importable en Postman.
+* [Arquitectura completa](docs/arquitectura.md)
+* [Pruebas funcionales con Postman](docs/postman-ejemplos.md)
 
 ---
 
 ## Estado del proyecto
 
-Proyecto funcional como base académica para laboratorio, presentación o evaluación de arquitectura de microservicios. Puede ser extendido con frontend, pruebas automatizadas, observabilidad, Dockerfile por servicio y despliegue en nube.
+El sistema fue preparado y probado progresivamente mediante Docker.
+
+Se verificaron individualmente y por grupos:
+
+* MySQL.
+* Kafka.
+* Zookeeper.
+* Eureka Server.
+* Auth Service.
+* API Gateway.
+* Microservicios principales.
+* Autenticación JWT.
+* Registro de servicios.
+* Healthchecks.
+* Comunicación mediante Gateway.
+
+La ejecución simultánea de todos los servicios puede requerir un computador con más memoria RAM que el utilizado durante el desarrollo.
 
 ---
 
-## Autoría
+## Autores
+**Pedro Riquelme**
+**Tomás Gutierrez**
+**Joaquín González**
 
-Proyecto desarrollado con fines académicos para demostrar buenas prácticas de arquitectura backend, microservicios, seguridad, persistencia y comunicación entre servicios.
+Proyecto académico desarrollado para demostrar conocimientos de:
+
+* Arquitectura de microservicios.
+* Desarrollo backend con Spring Boot.
+* Seguridad con JWT.
+* Persistencia con MySQL.
+* Comunicación mediante OpenFeign y Kafka.
+* Pruebas con JUnit, Mockito y Postman.
+* Contenerización con Docker.
